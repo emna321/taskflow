@@ -1,0 +1,98 @@
+@if (message) { <div class="alert alert-success alert-dismissible">{{ message }}<button class="btn-close" (click)="message=''"></button></div> }
+@if (erreur) { <div class="alert alert-danger alert-dismissible">{{ erreur }}<button class="btn-close" (click)="erreur=''"></button></div> }
+
+<div class="card">
+  <div class="card-header d-flex align-items-center">
+    <h3>Utilisateurs</h3>
+    <button class="btn btn-sm btn-primary ms-auto" (click)="ouvrirAjout()"><i class="bi bi-person-plus"></i> Ajouter</button>
+  </div>
+  @if (chargement) {
+    <div class="text-center p-5"><span class="spinner-border text-primary"></span></div>
+  } @else {
+    <div class="table-responsive">
+      <table class="table table-flush table-hover">
+        <thead><tr><th>Nom</th><th>Email</th><th>Téléphone</th><th>Rôles</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+          @for (u of users; track u.id) {
+            <tr>
+              <td class="fw-semibold text-dark">{{ u.prenom }} {{ u.nom }} @if (estMoi(u)) { <small class="text-muted">(vous)</small> }</td>
+              <td>{{ u.email }}</td>
+              <td>{{ u.tel || '-' }}</td>
+              <td>
+                @for (r of u.roles; track r) {
+                  <span class="badge me-1" [class.badge-soft-danger]="r === 'ADMIN'" [class.badge-soft-primary]="r !== 'ADMIN'">{{ r }}</span>
+                }
+              </td>
+              <td class="text-end text-nowrap">
+                @if (!estMoi(u)) {
+                  <button class="btn btn-sm btn-outline-secondary btn-icon" (click)="basculerAdmin(u)"
+                          [title]="u.roles.includes('ADMIN') ? 'Retirer le rôle admin' : 'Promouvoir admin'">
+                    <i class="bi" [class.bi-shield-minus]="u.roles.includes('ADMIN')" [class.bi-shield-plus]="!u.roles.includes('ADMIN')"></i>
+                  </button>
+                }
+                <button class="btn btn-sm btn-outline-primary btn-icon ms-1" title="Modifier" (click)="ouvrirEdition(u)"><i class="bi bi-pencil"></i></button>
+                @if (!estMoi(u)) {
+                  <button class="btn btn-sm btn-outline-danger btn-icon ms-1" title="Supprimer" (click)="supprimer(u)"><i class="bi bi-trash"></i></button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+@if (formOuvert) {
+  <div class="tf-backdrop" (click)="formOuvert = false">
+    <div class="card tf-modal" (click)="$event.stopPropagation()">
+      <div class="card-header d-flex"><h3>{{ enEdition ? "Modifier l'utilisateur" : 'Nouvel utilisateur' }}</h3>
+        <button class="btn-close ms-auto" (click)="formOuvert = false"></button></div>
+      <form class="card-body" [formGroup]="form" (ngSubmit)="enregistrer()" novalidate>
+        @if (erreurForm) { <div class="alert alert-danger py-2">{{ erreurForm }}</div> }
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Prénom *</label>
+            <input class="form-control" formControlName="prenom" [class.is-invalid]="invalide('prenom')" />
+            @if (invalide('prenom')) { <div class="invalid-feedback">Prénom obligatoire.</div> }
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Nom *</label>
+            <input class="form-control" formControlName="nom" [class.is-invalid]="invalide('nom')" />
+            @if (invalide('nom')) { <div class="invalid-feedback">Nom obligatoire.</div> }
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Email *</label>
+            <input class="form-control" type="email" formControlName="email" [class.is-invalid]="invalide('email')" />
+            @if (invalide('email')) { <div class="invalid-feedback">Email valide obligatoire.</div> }
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Téléphone</label>
+            <input class="form-control" formControlName="tel" [class.is-invalid]="invalide('tel')" />
+            @if (invalide('tel')) { <div class="invalid-feedback">8 à 15 chiffres.</div> }
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Mot de passe {{ enEdition ? '(laisser vide pour ne pas changer)' : '*' }}</label>
+          <input class="form-control" type="password" formControlName="password" [class.is-invalid]="invalide('password')" autocomplete="new-password" />
+          @if (invalide('password')) { <div class="invalid-feedback">Au moins 6 caractères.</div> }
+        </div>
+        <label class="form-label d-block">Rôles</label>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="rAdmin" formControlName="admin" />
+          <label class="form-check-label" for="rAdmin">ADMIN</label>
+        </div>
+        <div class="form-check form-check-inline">
+          <input class="form-check-input" type="checkbox" id="rCollab" formControlName="collaborateur" />
+          <label class="form-check-label" for="rCollab">COLLABORATEUR</label>
+        </div>
+        <div class="text-end mt-3">
+          <button type="button" class="btn btn-light me-2" (click)="formOuvert = false">Annuler</button>
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}

@@ -1,0 +1,59 @@
+<div class="auth-page">
+  <div class="auth-header bg-gradient-primary">
+    <div class="text-center text-white">
+      <h1 class="text-white">Créer un compte</h1>
+      <p class="text-white-50 mb-0">Rejoignez l'équipe sur TaskFlow</p>
+    </div>
+  </div>
+  <div class="container auth-body">
+    <div class="row justify-content-center">
+      <div class="col-lg-6 col-md-8">
+        <div class="card">
+          <div class="card-body px-lg-5 py-lg-5">
+            @if (erreur) { <div class="alert alert-danger py-2">{{ erreur }}</div> }
+
+            <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+              <div class="row">
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Prénom</label>
+                  <input class="form-control" formControlName="prenom" [class.is-invalid]="invalide('prenom')" />
+                  @if (invalide('prenom')) { <div class="invalid-feedback">Prénom obligatoire.</div> }
+                </div>
+                <div class="col-md-6 mb-3">
+                  <label class="form-label">Nom</label>
+                  <input class="form-control" formControlName="nom" [class.is-invalid]="invalide('nom')" />
+                  @if (invalide('nom')) { <div class="invalid-feedback">Nom obligatoire.</div> }
+                </div>
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Email</label>
+                <input class="form-control" type="email" formControlName="email" [class.is-invalid]="invalide('email')" />
+                @if (invalide('email')) { <div class="invalid-feedback">Email valide obligatoire.</div> }
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Téléphone <span class="text-muted fw-normal">(facultatif)</span></label>
+                <input class="form-control" formControlName="tel" [class.is-invalid]="invalide('tel')" />
+                @if (invalide('tel')) { <div class="invalid-feedback">8 à 15 chiffres.</div> }
+              </div>
+              <div class="mb-3">
+                <label class="form-label">Mot de passe</label>
+                <input class="form-control" type="password" formControlName="password"
+                       [class.is-invalid]="invalide('password')" autocomplete="new-password" />
+                @if (invalide('password')) { <div class="invalid-feedback">Au moins 6 caractères.</div> }
+              </div>
+              <div class="text-center">
+                <button type="submit" class="btn btn-primary mt-3 px-5" [disabled]="chargement">
+                  @if (chargement) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                  Créer mon compte
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+        <div class="text-center mt-3">
+          <a routerLink="/login" class="text-light-emphasis"><small>Déjà un compte ? Se connecter</small></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

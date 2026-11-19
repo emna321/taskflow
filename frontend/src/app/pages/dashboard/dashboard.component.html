@@ -1,0 +1,56 @@
+<div class="row g-4 mb-4">
+  <div class="col-xl-3 col-md-6">
+    <div class="card stat-card"><div class="card-body d-flex justify-content-between">
+      <div><div class="card-title">Clients</div><span class="h2 fw-bold">{{ nbClients }}</span></div>
+      <span class="icon-shape" style="background:linear-gradient(87deg,#fb6340,#fbb140)"><i class="bi bi-building"></i></span>
+    </div></div>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <div class="card stat-card"><div class="card-body d-flex justify-content-between">
+      <div><div class="card-title">Projets</div><span class="h2 fw-bold">{{ nbProjets }}</span></div>
+      <span class="icon-shape" style="background:linear-gradient(87deg,#11cdef,#1171ef)"><i class="bi bi-kanban"></i></span>
+    </div></div>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <div class="card stat-card"><div class="card-body d-flex justify-content-between">
+      <div><div class="card-title">Tâches en cours</div><span class="h2 fw-bold">{{ compte('EN_COURS') }}</span></div>
+      <span class="icon-shape" style="background:linear-gradient(87deg,#5e72e4,#825ee4)"><i class="bi bi-hourglass-split"></i></span>
+    </div></div>
+  </div>
+  <div class="col-xl-3 col-md-6">
+    <div class="card stat-card"><div class="card-body d-flex justify-content-between">
+      <div><div class="card-title">Tâches terminées</div><span class="h2 fw-bold">{{ compte('TERMINEE') }} / {{ taches.length }}</span></div>
+      <span class="icon-shape" style="background:linear-gradient(87deg,#2dce89,#2dcecc)"><i class="bi bi-check2-all"></i></span>
+    </div></div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header d-flex align-items-center">
+    <h3>Mes tâches à traiter</h3>
+    <a routerLink="/taches" class="btn btn-sm btn-primary ms-auto">Voir toutes les tâches</a>
+  </div>
+  @if (erreur) { <div class="alert alert-danger m-3">{{ erreur }}</div> }
+  @if (chargement) {
+    <div class="text-center p-5"><span class="spinner-border text-primary"></span></div>
+  } @else if (mesTaches.length === 0) {
+    <div class="empty-state"><i class="bi bi-emoji-smile"></i>Aucune tâche en attente pour vous.</div>
+  } @else {
+    <div class="table-responsive">
+      <table class="table table-flush">
+        <thead><tr><th>Tâche</th><th>Projet</th><th>Priorité</th><th>Statut</th><th>Échéance</th></tr></thead>
+        <tbody>
+          @for (t of mesTaches; track t.id) {
+            <tr>
+              <td class="fw-semibold text-dark">{{ t.titre }}</td>
+              <td>{{ t.projetLibelle }}</td>
+              <td>{{ prioriteLabels[t.priorite] }}</td>
+              <td>{{ statutLabels[t.statut] }}</td>
+              <td>{{ t.dateEcheance ? (t.dateEcheance | date: 'dd/MM/yyyy') : '-' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>

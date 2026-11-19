@@ -1,0 +1,144 @@
+@if (message) { <div class="alert alert-success alert-dismissible">{{ message }}<button class="btn-close" (click)="message=''"></button></div> }
+@if (erreur) { <div class="alert alert-danger alert-dismissible">{{ erreur }}<button class="btn-close" (click)="erreur=''"></button></div> }
+
+<div class="card">
+  <div class="card-header d-flex flex-wrap gap-2 align-items-center">
+    <h3>Liste des tâches</h3>
+    <div class="ms-auto d-flex flex-wrap gap-2 align-items-center">
+      <div class="form-check form-switch mb-0">
+        <input class="form-check-input" type="checkbox" id="mes" [checked]="mesTachesSeulement"
+               (change)="mesTachesSeulement = $any($event.target).checked" />
+        <label class="form-check-label" for="mes">Mes tâches</label>
+      </div>
+      <select class="form-select form-select-sm" style="width:auto" (change)="filtreProjet = $any($event.target).value ? +$any($event.target).value : null">
+        <option value="">Tous les projets</option>
+        @for (p of projets; track p.id) { <option [value]="p.id">{{ p.libelle }}</option> }
+      </select>
+      <select class="form-select form-select-sm" style="width:auto" (change)="filtreStatut = $any($event.target).value">
+        <option value="">Tous les statuts</option>
+        @for (s of statuts; track s) { <option [value]="s">{{ statutLabels[s] }}</option> }
+      </select>
+      <button class="btn btn-sm btn-primary" (click)="ouvrirAjout()"><i class="bi bi-plus-lg"></i> Ajouter</button>
+    </div>
+  </div>
+
+  @if (chargement) {
+    <div class="text-center p-5"><span class="spinner-border text-primary"></span></div>
+  } @else if (tachesFiltrees.length === 0) {
+    <div class="empty-state"><i class="bi bi-list-check"></i>Aucune tâche.</div>
+  } @else {
+    <div class="table-responsive">
+      <table class="table table-flush table-hover">
+        <thead><tr><th>Titre</th><th>Projet</th><th>Affectée à</th><th>Priorité</th><th>Échéance</th><th>Statut</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+          @for (t of tachesFiltrees; track t.id) {
+            <tr>
+              <td class="fw-semibold text-dark">{{ t.titre }}</td>
+              <td>{{ t.projetLibelle }}</td>
+              <td>{{ t.userNomComplet || '-' }}</td>
+              <td><span class="badge {{ badgePriorite(t.priorite) }}">{{ prioriteLabels[t.priorite] }}</span></td>
+              <td [class.text-danger]="enRetard(t)" [class.fw-semibold]="enRetard(t)">
+                {{ t.dateEcheance ? (t.dateEcheance | date: 'dd/MM/yyyy') : '-' }}
+              </td>
+              <td>
+                @if (peutChangerStatut(t)) {
+                  <select class="form-select form-select-sm" style="min-width:120px" [value]="t.statut"
+                          (change)="changerStatut(t, $any($event.target).value)">
+                    @for (s of statuts; track s) { <option [value]="s" [selected]="s === t.statut">{{ statutLabels[s] }}</option> }
+                  </select>
+                } @else {
+                  <span class="badge {{ badgeStatut(t.statut) }}">{{ statutLabels[t.statut] }}</span>
+                }
+              </td>
+              <td class="text-end text-nowrap">
+                <button class="btn btn-sm btn-outline-secondary btn-icon" title="Consulter" (click)="detail = t"><i class="bi bi-eye"></i></button>
+                @if (auth.isAdmin()) {
+                  <button class="btn btn-sm btn-outline-primary btn-icon ms-1" title="Modifier" (click)="ouvrirEdition(t)"><i class="bi bi-pencil"></i></button>
+                  <button class="btn btn-sm btn-outline-danger btn-icon ms-1" title="Supprimer" (click)="supprimer(t)"><i class="bi bi-trash"></i></button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+@if (formOuvert) {
+  <div class="tf-backdrop" (click)="formOuvert = false">
+    <div class="card tf-modal" (click)="$event.stopPropagation()">
+      <div class="card-header d-flex"><h3>{{ enEdition ? 'Modifier la tâche' : 'Nouvelle tâche' }}</h3>
+        <button class="btn-close ms-auto" (click)="formOuvert = false"></button></div>
+      <form class="card-body" [formGroup]="form" (ngSubmit)="enregistrer()" novalidate>
+        @if (erreurForm) { <div class="alert alert-danger py-2">{{ erreurForm }}</div> }
+        <div class="mb-3">
+          <label class="form-label">Titre *</label>
+          <input class="form-control" formControlName="titre" [class.is-invalid]="invalide('titre')" />
+          @if (invalide('titre')) { <div class="invalid-feedback">Titre obligatoire.</div> }
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Projet *</label>
+            <select class="form-select" formControlName="projetId" [class.is-invalid]="invalide('projetId')">
+              <option [ngValue]="null">-- Choisir un projet --</option>
+              @for (p of projets; track p.id) { <option [ngValue]="p.id">{{ p.libelle }} ({{ p.clientNom }})</option> }
+            </select>
+            @if (invalide('projetId')) { <div class="invalid-feedback">Projet obligatoire.</div> }
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Affecter à</label>
+            <select class="form-select" formControlName="userId">
+              <option [ngValue]="null">-- Non affectée --</option>
+              @for (u of users; track u.id) { <option [ngValue]="u.id">{{ u.prenom }} {{ u.nom }}</option> }
+            </select>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Priorité</label>
+            <select class="form-select" formControlName="priorite">
+              @for (p of priorites; track p) { <option [ngValue]="p">{{ prioriteLabels[p] }}</option> }
+            </select>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Statut</label>
+            <select class="form-select" formControlName="statut">
+              @for (s of statuts; track s) { <option [ngValue]="s">{{ statutLabels[s] }}</option> }
+            </select>
+          </div>
+          <div class="col-md-4 mb-3">
+            <label class="form-label">Échéance</label>
+            <input class="form-control" type="date" formControlName="dateEcheance" />
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" rows="3" formControlName="description"></textarea>
+        </div>
+        <div class="text-end">
+          <button type="button" class="btn btn-light me-2" (click)="formOuvert = false">Annuler</button>
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+@if (detail) {
+  <div class="tf-backdrop" (click)="detail = null">
+    <div class="card tf-modal" (click)="$event.stopPropagation()">
+      <div class="card-header d-flex"><h3>{{ detail.titre }}</h3><button class="btn-close ms-auto" (click)="detail = null"></button></div>
+      <div class="card-body">
+        <p class="mb-2">
+          <span class="badge {{ badgeStatut(detail.statut) }} me-1">{{ statutLabels[detail.statut] }}</span>
+          <span class="badge {{ badgePriorite(detail.priorite) }}">Priorité {{ prioriteLabels[detail.priorite] }}</span>
+        </p>
+        <p class="mb-1"><strong>Projet :</strong> {{ detail.projetLibelle }}</p>
+        <p class="mb-1"><strong>Affectée à :</strong> {{ detail.userNomComplet || 'Non affectée' }}</p>
+        <p class="mb-1"><strong>Échéance :</strong> {{ detail.dateEcheance ? (detail.dateEcheance | date: 'dd/MM/yyyy') : '-' }}</p>
+        <p><strong>Description :</strong> {{ detail.description || '-' }}</p>
+      </div>
+    </div>
+  </div>
+}

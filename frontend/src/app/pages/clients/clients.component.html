@@ -1,0 +1,99 @@
+@if (message) { <div class="alert alert-success alert-dismissible">{{ message }}<button class="btn-close" (click)="message=''"></button></div> }
+@if (erreur) { <div class="alert alert-danger alert-dismissible">{{ erreur }}<button class="btn-close" (click)="erreur=''"></button></div> }
+
+<div class="card">
+  <div class="card-header d-flex flex-wrap gap-2 align-items-center">
+    <h3>Liste des clients</h3>
+    <input class="form-control form-control-sm ms-auto" style="max-width:240px" placeholder="Rechercher…"
+           [value]="recherche" (input)="recherche = $any($event.target).value" />
+    <button class="btn btn-sm btn-primary" (click)="ouvrirAjout()"><i class="bi bi-plus-lg"></i> Ajouter</button>
+  </div>
+
+  @if (chargement) {
+    <div class="text-center p-5"><span class="spinner-border text-primary"></span></div>
+  } @else if (clientsFiltres.length === 0) {
+    <div class="empty-state"><i class="bi bi-building"></i>Aucun client.</div>
+  } @else {
+    <div class="table-responsive">
+      <table class="table table-flush table-hover">
+        <thead><tr><th>Nom</th><th>Email</th><th>Téléphone</th><th>Adresse</th><th>Projets</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+          @for (c of clientsFiltres; track c.id) {
+            <tr>
+              <td class="fw-semibold text-dark">{{ c.nom }}</td>
+              <td>{{ c.email || '-' }}</td>
+              <td>{{ c.tel || '-' }}</td>
+              <td>{{ c.adresse || '-' }}</td>
+              <td><span class="badge badge-soft-info">{{ c.nbProjets }}</span></td>
+              <td class="text-end text-nowrap">
+                <button class="btn btn-sm btn-outline-secondary btn-icon" title="Consulter" (click)="consulter(c)"><i class="bi bi-eye"></i></button>
+                @if (auth.isAdmin()) {
+                  <button class="btn btn-sm btn-outline-primary btn-icon ms-1" title="Modifier" (click)="ouvrirEdition(c)"><i class="bi bi-pencil"></i></button>
+                  <button class="btn btn-sm btn-outline-danger btn-icon ms-1" title="Supprimer" (click)="supprimer(c)"><i class="bi bi-trash"></i></button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+<!-- Formulaire ajout / modification -->
+@if (formOuvert) {
+  <div class="tf-backdrop" (click)="formOuvert = false">
+    <div class="card tf-modal" (click)="$event.stopPropagation()">
+      <div class="card-header d-flex"><h3>{{ enEdition ? 'Modifier le client' : 'Nouveau client' }}</h3>
+        <button class="btn-close ms-auto" (click)="formOuvert = false"></button></div>
+      <form class="card-body" [formGroup]="form" (ngSubmit)="enregistrer()" novalidate>
+        @if (erreurForm) { <div class="alert alert-danger py-2">{{ erreurForm }}</div> }
+        <div class="mb-3">
+          <label class="form-label">Nom *</label>
+          <input class="form-control" formControlName="nom" [class.is-invalid]="invalide('nom')" />
+          @if (invalide('nom')) { <div class="invalid-feedback">Nom obligatoire.</div> }
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Email</label>
+            <input class="form-control" type="email" formControlName="email" [class.is-invalid]="invalide('email')" />
+            @if (invalide('email')) { <div class="invalid-feedback">Email invalide.</div> }
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Téléphone</label>
+            <input class="form-control" formControlName="tel" [class.is-invalid]="invalide('tel')" />
+            @if (invalide('tel')) { <div class="invalid-feedback">8 à 15 chiffres.</div> }
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Adresse</label>
+          <input class="form-control" formControlName="adresse" />
+        </div>
+        <div class="text-end">
+          <button type="button" class="btn btn-light me-2" (click)="formOuvert = false">Annuler</button>
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Consultation -->
+@if (detail) {
+  <div class="tf-backdrop" (click)="detail = null">
+    <div class="card tf-modal" (click)="$event.stopPropagation()">
+      <div class="card-header d-flex"><h3>{{ detail.nom }}</h3><button class="btn-close ms-auto" (click)="detail = null"></button></div>
+      <div class="card-body">
+        <p class="mb-1"><i class="bi bi-envelope me-2"></i>{{ detail.email || '-' }}</p>
+        <p class="mb-1"><i class="bi bi-telephone me-2"></i>{{ detail.tel || '-' }}</p>
+        <p><i class="bi bi-geo-alt me-2"></i>{{ detail.adresse || '-' }}</p>
+        <h6 class="mt-4">Projets ({{ projetsDuClient.length }})</h6>
+        <ul class="list-group">
+          @for (p of projetsDuClient; track p.id) {
+            <li class="list-group-item d-flex"><span>{{ p.libelle }}</span><span class="ms-auto text-muted">{{ p.nbTaches }} tâche(s)</span></li>
+          } @empty { <li class="list-group-item text-muted">Aucun projet.</li> }
+        </ul>
+      </div>
+    </div>
+  </div>
+}

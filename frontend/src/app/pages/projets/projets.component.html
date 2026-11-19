@@ -1,0 +1,109 @@
+@if (message) { <div class="alert alert-success alert-dismissible">{{ message }}<button class="btn-close" (click)="message=''"></button></div> }
+@if (erreur) { <div class="alert alert-danger alert-dismissible">{{ erreur }}<button class="btn-close" (click)="erreur=''"></button></div> }
+
+<div class="card">
+  <div class="card-header d-flex flex-wrap gap-2 align-items-center">
+    <h3>Liste des projets</h3>
+    <select class="form-select form-select-sm ms-auto" style="max-width:220px" (change)="changerFiltre($any($event.target).value)">
+      <option value="">Tous les clients</option>
+      @for (c of clients; track c.id) { <option [value]="c.id">{{ c.nom }}</option> }
+    </select>
+    <button class="btn btn-sm btn-primary" (click)="ouvrirAjout()"><i class="bi bi-plus-lg"></i> Ajouter</button>
+  </div>
+
+  @if (chargement) {
+    <div class="text-center p-5"><span class="spinner-border text-primary"></span></div>
+  } @else if (projets.length === 0) {
+    <div class="empty-state"><i class="bi bi-kanban"></i>Aucun projet.</div>
+  } @else {
+    <div class="table-responsive">
+      <table class="table table-flush table-hover">
+        <thead><tr><th>Libellé</th><th>Client</th><th>Budget (DT)</th><th>Durée (jours)</th><th>Tâches</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+          @for (p of projets; track p.id) {
+            <tr>
+              <td class="fw-semibold text-dark">{{ p.libelle }}</td>
+              <td><span class="badge badge-soft-warning">{{ p.clientNom }}</span></td>
+              <td>{{ p.budget != null ? (p.budget | number: '1.0-2') : '-' }}</td>
+              <td>{{ p.duree ?? '-' }}</td>
+              <td><span class="badge badge-soft-info">{{ p.nbTaches }}</span></td>
+              <td class="text-end text-nowrap">
+                <button class="btn btn-sm btn-outline-secondary btn-icon" title="Consulter" (click)="consulter(p)"><i class="bi bi-eye"></i></button>
+                @if (auth.isAdmin()) {
+                  <button class="btn btn-sm btn-outline-primary btn-icon ms-1" title="Modifier" (click)="ouvrirEdition(p)"><i class="bi bi-pencil"></i></button>
+                  <button class="btn btn-sm btn-outline-danger btn-icon ms-1" title="Supprimer" (click)="supprimer(p)"><i class="bi bi-trash"></i></button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+</div>
+
+@if (formOuvert) {
+  <div class="tf-backdrop" (click)="formOuvert = false">
+    <div class="card tf-modal" (click)="$event.stopPropagation()">
+      <div class="card-header d-flex"><h3>{{ enEdition ? 'Modifier le projet' : 'Nouveau projet' }}</h3>
+        <button class="btn-close ms-auto" (click)="formOuvert = false"></button></div>
+      <form class="card-body" [formGroup]="form" (ngSubmit)="enregistrer()" novalidate>
+        @if (erreurForm) { <div class="alert alert-danger py-2">{{ erreurForm }}</div> }
+        <div class="mb-3">
+          <label class="form-label">Libellé *</label>
+          <input class="form-control" formControlName="libelle" [class.is-invalid]="invalide('libelle')" />
+          @if (invalide('libelle')) { <div class="invalid-feedback">Libellé obligatoire.</div> }
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Client *</label>
+          <select class="form-select" formControlName="clientId" [class.is-invalid]="invalide('clientId')">
+            <option [ngValue]="null">-- Choisir un client --</option>
+            @for (c of clients; track c.id) { <option [ngValue]="c.id">{{ c.nom }}</option> }
+          </select>
+          @if (invalide('clientId')) { <div class="invalid-feedback">Rattachez le projet à un client.</div> }
+        </div>
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Budget (DT)</label>
+            <input class="form-control" type="number" min="0" formControlName="budget" [class.is-invalid]="invalide('budget')" />
+            @if (invalide('budget')) { <div class="invalid-feedback">Le budget doit être positif.</div> }
+          </div>
+          <div class="col-md-6 mb-3">
+            <label class="form-label">Durée (jours)</label>
+            <input class="form-control" type="number" min="1" formControlName="duree" [class.is-invalid]="invalide('duree')" />
+            @if (invalide('duree')) { <div class="invalid-feedback">Au moins 1 jour.</div> }
+          </div>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">Description</label>
+          <textarea class="form-control" rows="3" formControlName="description"></textarea>
+        </div>
+        <div class="text-end">
+          <button type="button" class="btn btn-light me-2" (click)="formOuvert = false">Annuler</button>
+          <button type="submit" class="btn btn-primary">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+@if (detail) {
+  <div class="tf-backdrop" (click)="detail = null">
+    <div class="card tf-modal" (click)="$event.stopPropagation()">
+      <div class="card-header d-flex"><h3>{{ detail.libelle }}</h3><button class="btn-close ms-auto" (click)="detail = null"></button></div>
+      <div class="card-body">
+        <p class="mb-1"><strong>Client :</strong> {{ detail.clientNom }}</p>
+        <p class="mb-1"><strong>Budget :</strong> {{ detail.budget != null ? (detail.budget | number: '1.0-2') + ' DT' : '-' }}</p>
+        <p class="mb-1"><strong>Durée :</strong> {{ detail.duree ? detail.duree + ' jours' : '-' }}</p>
+        <p><strong>Description :</strong> {{ detail.description || '-' }}</p>
+        <h6 class="mt-4">Tâches ({{ tachesDuProjet.length }})</h6>
+        <ul class="list-group">
+          @for (t of tachesDuProjet; track t.id) {
+            <li class="list-group-item d-flex"><span>{{ t.titre }}</span>
+              <span class="ms-auto text-muted">{{ statutLabels[t.statut] }} · {{ t.userNomComplet || 'Non affectée' }}</span></li>
+          } @empty { <li class="list-group-item text-muted">Aucune tâche.</li> }
+        </ul>
+      </div>
+    </div>
+  </div>
+}

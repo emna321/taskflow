@@ -1,0 +1,17 @@
+# Backend
+backend/target/
+backend/src/main/resources/static/
+*.log
+# Frontend
+frontend/node_modules/
+frontend/.angular/
+frontend/dist/
+# IDE / OS
+.idea/
+.vscode/*
+!.vscode/extensions.json
+*.iml
+.DS_Store
+# Secrets
+*.env
+!deploy/*.env.example

@@ -1,0 +1,18 @@
+# Service systemd pour lancer TaskFlow sur le VPS
+# Copier dans /etc/systemd/system/taskflow.service puis :
+#   sudo systemctl daemon-reload && sudo systemctl enable --now taskflow
+[Unit]
+Description=TaskFlow (Spring Boot + Angular)
+After=network.target mysql.service
+
+[Service]
+User=taskflow
+WorkingDirectory=/opt/taskflow
+EnvironmentFile=/opt/taskflow/taskflow.env
+ExecStart=/usr/bin/java -jar /opt/taskflow/taskflow.jar
+SuccessExitStatus=143
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target
