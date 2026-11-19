@@ -21,5 +21,7 @@ FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 COPY --from=backend-build /app/backend/target/taskflow.jar ./taskflow.jar
 ENV SPRING_PROFILES_ACTIVE=render
+# Offre gratuite Render = 512 Mo : la JVM se limite a 75 % de la memoire du conteneur
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=75 -XX:+UseSerialGC"
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "taskflow.jar"]

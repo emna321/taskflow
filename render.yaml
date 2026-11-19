@@ -1,0 +1,36 @@
+# Blueprint Render : cree la base PostgreSQL et l'application web (Docker) en une fois.
+# Render > New > Blueprint > choisir ce depot GitHub.
+databases:
+  - name: taskflow-db
+    plan: free
+    databaseName: taskflow_db
+    user: taskflow
+
+services:
+  - type: web
+    name: taskflow
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /
+    envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
+      - key: DB_HOST
+        fromDatabase: { name: taskflow-db, property: host }
+      - key: DB_PORT
+        fromDatabase: { name: taskflow-db, property: port }
+      - key: DB_NAME
+        fromDatabase: { name: taskflow-db, property: database }
+      - key: DB_USER
+        fromDatabase: { name: taskflow-db, property: user }
+      - key: DB_PASSWORD
+        fromDatabase: { name: taskflow-db, property: password }
+      # Cle JWT aleatoire (256 bits, base64) generee par Render
+      - key: JWT_SECRET
+        generateValue: true
+      # Mot de passe du compte admin@taskflow.com : demande a la creation
+      - key: ADMIN_PASSWORD
+        sync: false
+      - key: MAIL_ENABLED
+        value: "false"
