@@ -52,6 +52,11 @@ class Fichier {
   - contenu : byte[]  <<LONGBLOB/bytea>>
   - dateUpload : LocalDateTime
 }
+class Commentaire {
+  - id : Long
+  - texte : String
+  - dateCreation : LocalDateTime
+}
 
 User "*" -- "*" Role : possede >
 Client "1" -- "*" Projet : a >
@@ -63,6 +68,8 @@ Tache ..> Priorite
 Fichier "*" -- "1" User : envoye par >
 Fichier "*" -- "0..1" Tache : piece jointe de >
 Fichier "*" -- "0..1" Projet : document de >
+Commentaire "*" -- "1" User : ecrit par >
+Commentaire "*" -- "1" Tache : commente >
 note right of Fichier
   Rattache a une Tache OU un Projet
   (jamais les deux), verifie en service.

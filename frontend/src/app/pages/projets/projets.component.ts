@@ -24,9 +24,17 @@ export class ProjetsComponent implements OnInit {
   projets: Projet[] = [];
   clients: Client[] = [];
   filtreClient: number | null = null;
+  filtreQ = '';
   chargement = true;
   erreur = '';
   message = '';
+  private debounceId: ReturnType<typeof setTimeout> | null = null;
+
+  // Pagination
+  pageCourante = 0;
+  taillePage = 10;
+  totalElements = 0;
+  totalPages = 0;
 
   formOuvert = false;
   enEdition: Projet | null = null;
@@ -49,15 +57,38 @@ export class ProjetsComponent implements OnInit {
 
   charger(): void {
     this.chargement = true;
-    this.projetService.getAll(this.filtreClient ?? undefined).subscribe({
-      next: p => { this.projets = p; this.chargement = false; },
+    this.projetService.rechercher(this.filtreQ, this.filtreClient, 'libelle', this.pageCourante, this.taillePage).subscribe({
+      next: p => {
+        this.projets = p.content;
+        this.totalElements = p.totalElements;
+        this.totalPages = p.totalPages;
+        this.chargement = false;
+      },
       error: err => { this.erreur = errorMessage(err); this.chargement = false; }
     });
   }
 
+  appliquerFiltres(): void {
+    this.pageCourante = 0;
+    this.charger();
+  }
+
   changerFiltre(valeur: string): void {
     this.filtreClient = valeur ? Number(valeur) : null;
-    this.charger();
+    this.appliquerFiltres();
+  }
+
+  onRechercheTexte(valeur: string): void {
+    this.filtreQ = valeur;
+    if (this.debounceId) clearTimeout(this.debounceId);
+    this.debounceId = setTimeout(() => this.appliquerFiltres(), 300);
+  }
+
+  pagePrecedente(): void {
+    if (this.pageCourante > 0) { this.pageCourante--; this.charger(); }
+  }
+  pageSuivante(): void {
+    if (this.pageCourante + 1 < this.totalPages) { this.pageCourante++; this.charger(); }
   }
 
   invalide(champ: string): boolean {

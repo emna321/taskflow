@@ -6,13 +6,14 @@ import { ProjetService } from '../../core/services/projet.service';
 import { TacheService } from '../../core/services/tache.service';
 import { UserService } from '../../core/services/user.service';
 import { FileUploadComponent } from '../../shared/file-upload/file-upload.component';
+import { CommentairesComponent } from '../../shared/commentaires/commentaires.component';
 import {
   PRIORITE_LABELS, Priorite, Projet, STATUT_LABELS, Statut, Tache, TacheRequest, User, errorMessage
 } from '../../core/models';
 
 @Component({
   selector: 'app-taches',
-  imports: [ReactiveFormsModule, DatePipe, FileUploadComponent],
+  imports: [ReactiveFormsModule, DatePipe, FileUploadComponent, CommentairesComponent],
   templateUrl: './taches.component.html'
 })
 export class TachesComponent implements OnInit {
@@ -34,10 +35,21 @@ export class TachesComponent implements OnInit {
   erreur = '';
   message = '';
 
-  // Filtres
+  // Filtres (recherche serveur, GET /api/taches/recherche)
+  filtreQ = '';
   filtreProjet: number | null = null;
   filtreStatut: Statut | '' = '';
+  filtrePriorite: Priorite | '' = '';
+  filtreDateDebut = '';
+  filtreDateFin = '';
   mesTachesSeulement = false;
+  private debounceId: ReturnType<typeof setTimeout> | null = null;
+
+  // Pagination
+  pageCourante = 0;
+  taillePage = 10;
+  totalElements = 0;
+  totalPages = 0;
 
   formOuvert = false;
   enEdition: Tache | null = null;
@@ -54,26 +66,54 @@ export class TachesComponent implements OnInit {
 
   detail: Tache | null = null;
 
-  get tachesFiltrees(): Tache[] {
-    const moi = this.auth.currentUser()?.id;
-    return this.taches.filter(t =>
-      (!this.filtreProjet || t.projetId === this.filtreProjet) &&
-      (!this.filtreStatut || t.statut === this.filtreStatut) &&
-      (!this.mesTachesSeulement || t.userId === moi));
-  }
-
   ngOnInit(): void {
     this.projetService.getAll().subscribe({ next: p => this.projets = p, error: err => this.erreur = errorMessage(err) });
     this.userService.getAssignables().subscribe({ next: u => this.users = u });
     this.charger();
   }
 
+  /** Reinitialise la pagination puis recharge (appele quand un filtre change). */
+  appliquerFiltres(): void {
+    this.pageCourante = 0;
+    this.charger();
+  }
+
+  /** Recherche texte : petite temporisation pour eviter une requete a chaque frappe. */
+  onRechercheTexte(valeur: string): void {
+    this.filtreQ = valeur;
+    if (this.debounceId) clearTimeout(this.debounceId);
+    this.debounceId = setTimeout(() => this.appliquerFiltres(), 300);
+  }
+
   charger(): void {
     this.chargement = true;
-    this.tacheService.getAll().subscribe({
-      next: t => { this.taches = t; this.chargement = false; },
+    const moi = this.auth.currentUser()?.id;
+    this.tacheService.rechercher({
+      q: this.filtreQ || undefined,
+      statut: this.filtreStatut || undefined,
+      priorite: this.filtrePriorite || undefined,
+      projetId: this.filtreProjet ?? undefined,
+      userId: this.mesTachesSeulement ? moi : undefined,
+      dateDebut: this.filtreDateDebut || undefined,
+      dateFin: this.filtreDateFin || undefined,
+      page: this.pageCourante,
+      taille: this.taillePage
+    }).subscribe({
+      next: p => {
+        this.taches = p.content;
+        this.totalElements = p.totalElements;
+        this.totalPages = p.totalPages;
+        this.chargement = false;
+      },
       error: err => { this.erreur = errorMessage(err); this.chargement = false; }
     });
+  }
+
+  pagePrecedente(): void {
+    if (this.pageCourante > 0) { this.pageCourante--; this.charger(); }
+  }
+  pageSuivante(): void {
+    if (this.pageCourante + 1 < this.totalPages) { this.pageCourante++; this.charger(); }
   }
 
   /** Admin : toutes les taches ; collaborateur : uniquement les siennes */

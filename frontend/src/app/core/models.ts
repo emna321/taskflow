@@ -35,6 +35,25 @@ export interface FichierMeta {
   uploadeParId: number; uploadeParNom: string;
 }
 
+export interface Commentaire {
+  id: number; texte: string; dateCreation: string; auteurId: number; auteurNom: string;
+}
+
+export interface ProjetStat { projetId: number; projetLibelle: string; nbTaches: number; }
+export interface CollaborateurStat { userId: number; userNom: string; nbTaches: number; }
+
+export interface Stats {
+  tachesParStatut: Record<Statut, number>;
+  tachesParPriorite: Record<Priorite, number>;
+  tachesParProjet: ProjetStat[];
+  tachesEnRetard: number;
+  chargeParCollaborateur: CollaborateurStat[];
+  nbClients: number;
+  nbProjets: number;
+}
+
+export interface Page<T> { content: T[]; totalElements: number; totalPages: number; page: number; taille: number; }
+
 export interface Projet {
   id: number; libelle: string; budget?: number; duree?: number; description?: string;
   clientId: number; clientNom: string; nbTaches: number;

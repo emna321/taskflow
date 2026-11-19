@@ -3,11 +3,12 @@ package com.taskflow.repository;
 import com.taskflow.dto.ClientDto;
 import com.taskflow.entity.Client;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
-public interface ClientRepository extends JpaRepository<Client, Long> {
+public interface ClientRepository extends JpaRepository<Client, Long>, JpaSpecificationExecutor<Client> {
 
     /** Projection sans le logo (colonne binaire) : jamais chargee dans la liste. */
     @Query("""

@@ -5,20 +5,20 @@
   <div class="card-header d-flex flex-wrap gap-2 align-items-center">
     <h3>Liste des clients</h3>
     <input class="form-control form-control-sm ms-auto" style="max-width:240px" placeholder="Rechercher…"
-           [value]="recherche" (input)="recherche = $any($event.target).value" />
+           [value]="recherche" (input)="onRechercheTexte($any($event.target).value)" />
     <button class="btn btn-sm btn-primary" (click)="ouvrirAjout()"><i class="bi bi-plus-lg"></i> Ajouter</button>
   </div>
 
   @if (chargement) {
     <div class="text-center p-5"><span class="spinner-border text-primary"></span></div>
-  } @else if (clientsFiltres.length === 0) {
+  } @else if (clients.length === 0) {
     <div class="empty-state"><i class="bi bi-building"></i>Aucun client.</div>
   } @else {
     <div class="table-responsive">
       <table class="table table-flush table-hover">
         <thead><tr><th>Nom</th><th>Email</th><th>Téléphone</th><th>Adresse</th><th>Projets</th><th class="text-end">Actions</th></tr></thead>
         <tbody>
-          @for (c of clientsFiltres; track c.id) {
+          @for (c of clients; track c.id) {
             <tr>
               <td class="fw-semibold text-dark">
                 <span class="d-flex align-items-center gap-2">
@@ -45,6 +45,17 @@
           }
         </tbody>
       </table>
+    </div>
+    <div class="card-footer d-flex align-items-center justify-content-between">
+      <span class="text-muted small">{{ totalElements }} client(s) · page {{ pageCourante + 1 }} / {{ totalPages || 1 }}</span>
+      <div class="btn-group">
+        <button class="btn btn-sm btn-outline-secondary" [disabled]="pageCourante === 0" (click)="pagePrecedente()">
+          <i class="bi bi-chevron-left"></i> Précédent
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" [disabled]="pageCourante + 1 >= totalPages" (click)="pageSuivante()">
+          Suivant <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
     </div>
   }
 </div>

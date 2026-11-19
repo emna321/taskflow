@@ -5,33 +5,46 @@
   <div class="card-header d-flex flex-wrap gap-2 align-items-center">
     <h3>Liste des tâches</h3>
     <div class="ms-auto d-flex flex-wrap gap-2 align-items-center">
+      <input class="form-control form-control-sm" style="width:160px" placeholder="Rechercher…"
+             [value]="filtreQ" (input)="onRechercheTexte($any($event.target).value)" />
       <div class="form-check form-switch mb-0">
         <input class="form-check-input" type="checkbox" id="mes" [checked]="mesTachesSeulement"
-               (change)="mesTachesSeulement = $any($event.target).checked" />
+               (change)="mesTachesSeulement = $any($event.target).checked; appliquerFiltres()" />
         <label class="form-check-label" for="mes">Mes tâches</label>
       </div>
-      <select class="form-select form-select-sm" style="width:auto" (change)="filtreProjet = $any($event.target).value ? +$any($event.target).value : null">
+      <select class="form-select form-select-sm" style="width:auto"
+              (change)="filtreProjet = $any($event.target).value ? +$any($event.target).value : null; appliquerFiltres()">
         <option value="">Tous les projets</option>
         @for (p of projets; track p.id) { <option [value]="p.id">{{ p.libelle }}</option> }
       </select>
-      <select class="form-select form-select-sm" style="width:auto" (change)="filtreStatut = $any($event.target).value">
+      <select class="form-select form-select-sm" style="width:auto"
+              (change)="filtreStatut = $any($event.target).value; appliquerFiltres()">
         <option value="">Tous les statuts</option>
         @for (s of statuts; track s) { <option [value]="s">{{ statutLabels[s] }}</option> }
       </select>
+      <select class="form-select form-select-sm" style="width:auto"
+              (change)="filtrePriorite = $any($event.target).value; appliquerFiltres()">
+        <option value="">Toutes les priorités</option>
+        @for (p of priorites; track p) { <option [value]="p">{{ prioriteLabels[p] }}</option> }
+      </select>
+      <input class="form-control form-control-sm" style="width:140px" type="date" title="Échéance après le"
+             [value]="filtreDateDebut" (change)="filtreDateDebut = $any($event.target).value; appliquerFiltres()" />
+      <input class="form-control form-control-sm" style="width:140px" type="date" title="Échéance avant le"
+             [value]="filtreDateFin" (change)="filtreDateFin = $any($event.target).value; appliquerFiltres()" />
       <button class="btn btn-sm btn-primary" (click)="ouvrirAjout()"><i class="bi bi-plus-lg"></i> Ajouter</button>
     </div>
   </div>
 
   @if (chargement) {
     <div class="text-center p-5"><span class="spinner-border text-primary"></span></div>
-  } @else if (tachesFiltrees.length === 0) {
+  } @else if (taches.length === 0) {
     <div class="empty-state"><i class="bi bi-list-check"></i>Aucune tâche.</div>
   } @else {
     <div class="table-responsive">
       <table class="table table-flush table-hover">
         <thead><tr><th>Titre</th><th>Projet</th><th>Affectée à</th><th>Priorité</th><th>Échéance</th><th>Statut</th><th class="text-end">Actions</th></tr></thead>
         <tbody>
-          @for (t of tachesFiltrees; track t.id) {
+          @for (t of taches; track t.id) {
             <tr>
               <td class="fw-semibold text-dark">{{ t.titre }}</td>
               <td>{{ t.projetLibelle }}</td>
@@ -61,6 +74,17 @@
           }
         </tbody>
       </table>
+    </div>
+    <div class="card-footer d-flex align-items-center justify-content-between">
+      <span class="text-muted small">{{ totalElements }} tâche(s) · page {{ pageCourante + 1 }} / {{ totalPages || 1 }}</span>
+      <div class="btn-group">
+        <button class="btn btn-sm btn-outline-secondary" [disabled]="pageCourante === 0" (click)="pagePrecedente()">
+          <i class="bi bi-chevron-left"></i> Précédent
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" [disabled]="pageCourante + 1 >= totalPages" (click)="pageSuivante()">
+          Suivant <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
     </div>
   }
 </div>
@@ -140,6 +164,8 @@
         <p><strong>Description :</strong> {{ detail.description || '-' }}</p>
         <h6 class="mt-4">Pièces jointes</h6>
         <app-file-upload type="tache" [id]="detail.id" />
+        <h6 class="mt-4">Commentaires</h6>
+        <app-commentaires [tacheId]="detail.id" />
       </div>
     </div>
   </div>

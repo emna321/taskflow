@@ -1,18 +1,26 @@
 package com.taskflow.service;
 
+import com.taskflow.dto.PageResponse;
 import com.taskflow.dto.TacheRequest;
 import com.taskflow.dto.TacheResponse;
 import com.taskflow.entity.Priorite;
 import com.taskflow.entity.Statut;
 import com.taskflow.entity.Tache;
 import com.taskflow.exception.ResourceNotFoundException;
+import com.taskflow.repository.CommentaireRepository;
 import com.taskflow.repository.FichierRepository;
 import com.taskflow.repository.TacheRepository;
+import com.taskflow.repository.spec.TacheSpecifications;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDate;
 import java.util.List;
+import java.util.Set;
 
 @Service
 public class TacheService {
@@ -21,13 +29,15 @@ public class TacheService {
     private final ProjetService projetService;
     private final UserService userService;
     private final FichierRepository fichierRepository;
+    private final CommentaireRepository commentaireRepository;
 
     public TacheService(TacheRepository tacheRepository, ProjetService projetService, UserService userService,
-                        FichierRepository fichierRepository) {
+                        FichierRepository fichierRepository, CommentaireRepository commentaireRepository) {
         this.tacheRepository = tacheRepository;
         this.projetService = projetService;
         this.userService = userService;
         this.fichierRepository = fichierRepository;
+        this.commentaireRepository = commentaireRepository;
     }
 
     @Transactional(readOnly = true)
@@ -41,6 +51,20 @@ public class TacheService {
             taches = tacheRepository.findAll();
         }
         return taches.stream().map(TacheResponse::from).toList();
+    }
+
+    private static final Set<String> TRIS_AUTORISES = Set.of("titre", "priorite", "statut", "dateEcheance");
+
+    /** Recherche paginee avec filtres (utilisee par la page Taches, en plus de findAll()). */
+    @Transactional(readOnly = true)
+    public PageResponse<TacheResponse> rechercher(String q, Statut statut, Priorite priorite, Long projetId,
+                                                  Long userId, LocalDate dateDebut, LocalDate dateFin,
+                                                  String tri, int page, int taille) {
+        String proprieteTri = TRIS_AUTORISES.contains(tri) ? tri : "dateEcheance";
+        PageRequest pageable = PageRequest.of(Math.max(page, 0), Math.max(taille, 1), Sort.by(proprieteTri));
+        Page<Tache> resultat = tacheRepository.findAll(
+                TacheSpecifications.avecFiltres(q, statut, priorite, projetId, userId, dateDebut, dateFin), pageable);
+        return PageResponse.from(resultat.map(TacheResponse::from));
     }
 
     @Transactional(readOnly = true)
@@ -66,6 +90,7 @@ public class TacheService {
     public void delete(Long id) {
         Tache t = getEntity(id);
         fichierRepository.deleteByTacheId(t.getId());
+        commentaireRepository.deleteByTacheId(t.getId());
         tacheRepository.delete(t);
     }
 

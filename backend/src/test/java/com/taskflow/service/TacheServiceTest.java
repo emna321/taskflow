@@ -3,6 +3,7 @@ package com.taskflow.service;
 import com.taskflow.dto.TacheRequest;
 import com.taskflow.dto.TacheResponse;
 import com.taskflow.entity.*;
+import com.taskflow.repository.CommentaireRepository;
 import com.taskflow.repository.FichierRepository;
 import com.taskflow.repository.TacheRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -28,6 +29,7 @@ class TacheServiceTest {
     @Mock private ProjetService projetService;
     @Mock private UserService userService;
     @Mock private FichierRepository fichierRepository;
+    @Mock private CommentaireRepository commentaireRepository;
 
     @InjectMocks
     private TacheService tacheService;
@@ -111,6 +113,7 @@ class TacheServiceTest {
         tacheService.delete(100L);
 
         verify(fichierRepository).deleteByTacheId(100L);
+        verify(commentaireRepository).deleteByTacheId(100L);
         verify(tacheRepository).delete(tacheDeSami);
     }
 

@@ -25,6 +25,43 @@
   </div>
 </div>
 
+@if (stats) {
+  <div class="row g-4 mb-4">
+    <div class="col-xl-3 col-md-6">
+      <div class="card stat-card"><div class="card-body d-flex justify-content-between">
+        <div><div class="card-title">Tâches en retard</div><span class="h2 fw-bold" [class.text-danger]="stats.tachesEnRetard > 0">{{ stats.tachesEnRetard }}</span></div>
+        <span class="icon-shape" style="background:linear-gradient(87deg,#f5365c,#f56036)"><i class="bi bi-exclamation-triangle"></i></span>
+      </div></div>
+    </div>
+  </div>
+
+  <div class="row g-4 mb-4">
+    <div class="col-xl-4">
+      <div class="card h-100">
+        <div class="card-header"><h3>Tâches par statut</h3></div>
+        <div class="card-body"><canvas baseChart [data]="statutChartData" [options]="statutChartOptions" type="doughnut"></canvas></div>
+      </div>
+    </div>
+    <div class="col-xl-4">
+      <div class="card h-100">
+        <div class="card-header"><h3>Tâches par priorité</h3></div>
+        <div class="card-body"><canvas baseChart [data]="prioriteChartData" [options]="prioriteChartOptions" type="bar"></canvas></div>
+      </div>
+    </div>
+    <div class="col-xl-4">
+      <div class="card h-100">
+        <div class="card-header"><h3>Charge par collaborateur</h3></div>
+        <div class="card-body"><canvas baseChart [data]="chargeChartData" [options]="chargeChartOptions" type="bar"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card mb-4">
+    <div class="card-header"><h3>Tâches par projet</h3></div>
+    <div class="card-body"><canvas baseChart [data]="projetChartData" [options]="projetChartOptions" type="bar"></canvas></div>
+  </div>
+}
+
 <div class="card">
   <div class="card-header d-flex align-items-center">
     <h3>Mes tâches à traiter</h3>

@@ -1,5 +1,6 @@
 package com.taskflow.controller;
 
+import com.taskflow.dto.PageResponse;
 import com.taskflow.dto.ProjetRequest;
 import com.taskflow.dto.ProjetResponse;
 import com.taskflow.service.ProjetService;
@@ -24,6 +25,17 @@ public class ProjetController {
     @GetMapping
     public List<ProjetResponse> findAll(@RequestParam(required = false) Long clientId) {
         return projetService.findAll(clientId);
+    }
+
+    /** Recherche avancee paginee : GET /api/projets/recherche?q=...&clientId=...&page=0&taille=10 */
+    @GetMapping("/recherche")
+    public PageResponse<ProjetResponse> rechercher(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) Long clientId,
+            @RequestParam(defaultValue = "libelle") String tri,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int taille) {
+        return projetService.rechercher(q, clientId, tri, page, taille);
     }
 
     @GetMapping("/{id}")

@@ -81,6 +81,9 @@ Ouvrir http://localhost:4200. En développement, Angular appelle `http://localho
 | Pièces jointes (tâches/projets) : envoyer, lister, télécharger | ✅ | ✅ |
 | Pièces jointes : supprimer | ✅ | seulement les siennes (403 sinon) |
 | Logo client / photo de profil : envoyer, consulter | ✅ | ✅ (sa propre photo) |
+| Commentaires : lister, ajouter | ✅ | ✅ |
+| Commentaires : supprimer | ✅ | seulement les siens (403 sinon) |
+| Statistiques du tableau de bord, Kanban, recherche avancée | ✅ | ✅ |
 
 À l'inscription, l'utilisateur reçoit le rôle **COLLABORATEUR**. L'admin peut ensuite le promouvoir depuis la page *Utilisateurs*.
 
@@ -115,8 +118,14 @@ Toutes les routes sauf `login` et `register` exigent l'en-tête `Authorization: 
 | GET | `/api/clients/{id}/logo` | connecté |
 | POST (multipart) | `/api/users/me/photo` (champ `photo`, image 1 Mo max) | connecté |
 | GET | `/api/users/{id}/photo` | connecté |
+| GET / POST | `/api/taches/{id}/commentaires` | connecté |
+| DELETE | `/api/commentaires/{id}` | ADMIN ou l'auteur du commentaire |
+| GET | `/api/stats` (statuts, priorités, par projet, en retard, charge par collaborateur) | connecté |
+| GET | `/api/taches/recherche`, `/api/projets/recherche`, `/api/clients/recherche` (`q`, filtres, `tri`, `page`, `taille`, réponse paginée) | connecté |
 
 **Erreurs** : réponse JSON `{ status, message, details }` avec les codes 400 (validation ou fichier invalide, avec un message par champ), 401 (non connecté / token invalide), 403 (droits insuffisants), 404 (introuvable), 409 (email déjà utilisé) et 413 (fichier trop volumineux).
+
+**Recherche paginée** : endpoints dédiés (`/recherche`) distincts des listes existantes (`GET /api/taches`, etc.), pour ne rien casser côté dashboard/Kanban/fiche projet qui consomment encore la liste simple. La page Tâches, Projets et Clients utilise `/recherche` avec sa barre de filtres + pagination (Précédent/Suivant).
 
 **Pièces jointes** : stockées en base (colonne binaire LONGBLOB sur MySQL / bytea sur PostgreSQL), jamais sur le disque — indispensable sur Render dont le plan gratuit ne conserve pas le filesystem. Types acceptés : pdf, doc(x), xls(x), ppt(x), txt, csv, png, jpg, jpeg, webp, zip (5 Mo max, 1 Mo pour le logo/la photo). L'extension, le type MIME et la signature binaire (pour les images et PDF) sont vérifiés côté serveur ; le nom de fichier est nettoyé (chemins et caractères spéciaux retirés).
 
@@ -176,6 +185,8 @@ Logs : `sudo journalctl -u taskflow -f`
 L'interface reprend la charte du template **Argon Dashboard** de Creative Tim : sidenav blanche, en-tête dégradé indigo, cartes ombrées, tableaux « flush » et badges colorés. Elle est construite avec Bootstrap 5 et Bootstrap Icons (`frontend/src/styles.css`).
 Pour utiliser les fichiers officiels du template (https://www.creative-tim.com/product/argon-dashboard-angular), copiez `argon-dashboard.css` et ses polices dans `frontend/src/assets/`, puis ajoutez-les dans `angular.json` → `styles`. Les classes utilisées (`card`, `table-flush`, `bg-gradient-primary`, `header`…) sont les mêmes.
 
+Graphiques du tableau de bord : `chart.js` + `ng2-charts` (`provideCharts` dans `app.config.ts`). Vue Kanban (`/#/kanban`) : `@angular/cdk/drag-drop` (glisser-déposer entre colonnes À faire / En cours / Terminée, verrouillé pour les cartes qu'un collaborateur n'a pas le droit de déplacer).
+
 ---
 
 ## 9. Modèle de données
@@ -188,6 +199,7 @@ Client (id, nom, tel, email, adresse, logoContenu, logoTypeMime)  1 ── *  Pr
 Projet  1 ── *  Tache (id, titre, description, statut, priorite, dateEcheance)
 User    1 ── *  Tache   (tâche affectée à un utilisateur, facultatif)
 Fichier (id, nomOriginal, typeMime, taille, contenu, dateUpload, idUploadePar) ── *  rattache a 1 Tache OU 1 Projet (jamais les deux)
+Commentaire (id, texte, dateCreation, idAuteur, idTache)  * ── 1  Tache
 ```
 Suppressions : un client supprime ses projets (et leurs pièces jointes), un projet supprime ses tâches et ses documents, et un utilisateur supprimé libère ses tâches (elles deviennent non affectées).
 

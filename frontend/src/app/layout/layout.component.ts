@@ -43,6 +43,7 @@ export class LayoutComponent {
     { path: '/clients', label: 'Clients', icon: 'bi-building', color: 'text-warning' },
     { path: '/projets', label: 'Projets', icon: 'bi-kanban', color: 'text-info' },
     { path: '/taches', label: 'Tâches', icon: 'bi-list-check', color: 'text-success' },
+    { path: '/kanban', label: 'Kanban', icon: 'bi-columns-gap', color: 'text-primary' },
     { path: '/users', label: 'Utilisateurs', icon: 'bi-people', color: 'text-danger', adminOnly: true }
   ];
 

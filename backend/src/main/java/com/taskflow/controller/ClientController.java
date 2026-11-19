@@ -1,6 +1,7 @@
 package com.taskflow.controller;
 
 import com.taskflow.dto.ClientDto;
+import com.taskflow.dto.PageResponse;
 import com.taskflow.entity.Client;
 import com.taskflow.service.ClientService;
 import jakarta.validation.Valid;
@@ -27,6 +28,16 @@ public class ClientController {
     @GetMapping
     public List<ClientDto> findAll() {
         return clientService.findAll();
+    }
+
+    /** Recherche avancee paginee : GET /api/clients/recherche?q=...&page=0&taille=10 */
+    @GetMapping("/recherche")
+    public PageResponse<ClientDto> rechercher(
+            @RequestParam(required = false) String q,
+            @RequestParam(defaultValue = "nom") String tri,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int taille) {
+        return clientService.rechercher(q, tri, page, taille);
     }
 
     @GetMapping("/{id}")

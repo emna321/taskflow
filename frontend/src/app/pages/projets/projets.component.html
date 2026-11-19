@@ -4,7 +4,9 @@
 <div class="card">
   <div class="card-header d-flex flex-wrap gap-2 align-items-center">
     <h3>Liste des projets</h3>
-    <select class="form-select form-select-sm ms-auto" style="max-width:220px" (change)="changerFiltre($any($event.target).value)">
+    <input class="form-control form-control-sm ms-auto" style="max-width:200px" placeholder="Rechercher…"
+           [value]="filtreQ" (input)="onRechercheTexte($any($event.target).value)" />
+    <select class="form-select form-select-sm" style="max-width:220px" (change)="changerFiltre($any($event.target).value)">
       <option value="">Tous les clients</option>
       @for (c of clients; track c.id) { <option [value]="c.id">{{ c.nom }}</option> }
     </select>
@@ -38,6 +40,17 @@
           }
         </tbody>
       </table>
+    </div>
+    <div class="card-footer d-flex align-items-center justify-content-between">
+      <span class="text-muted small">{{ totalElements }} projet(s) · page {{ pageCourante + 1 }} / {{ totalPages || 1 }}</span>
+      <div class="btn-group">
+        <button class="btn btn-sm btn-outline-secondary" [disabled]="pageCourante === 0" (click)="pagePrecedente()">
+          <i class="bi bi-chevron-left"></i> Précédent
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" [disabled]="pageCourante + 1 >= totalPages" (click)="pageSuivante()">
+          Suivant <i class="bi bi-chevron-right"></i>
+        </button>
+      </div>
     </div>
   }
 </div>

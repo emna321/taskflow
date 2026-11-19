@@ -29,6 +29,13 @@ export class ClientsComponent implements OnInit {
   erreurLogo = '';
   /** URL (blob) des logos deja charges, indexees par id client. */
   logoUrls: Record<number, string> = {};
+  private debounceId: ReturnType<typeof setTimeout> | null = null;
+
+  // Pagination
+  pageCourante = 0;
+  taillePage = 10;
+  totalElements = 0;
+  totalPages = 0;
 
   // Formulaire ajout / modification
   formOuvert = false;
@@ -45,20 +52,33 @@ export class ClientsComponent implements OnInit {
   detail: Client | null = null;
   projetsDuClient: Projet[] = [];
 
-  get clientsFiltres(): Client[] {
-    const q = this.recherche.toLowerCase().trim();
-    return q ? this.clients.filter(c => [c.nom, c.email, c.tel, c.adresse].some(v => v?.toLowerCase().includes(q)))
-             : this.clients;
-  }
-
   ngOnInit(): void { this.charger(); }
 
   charger(): void {
     this.chargement = true;
-    this.clientService.getAll().subscribe({
-      next: c => { this.clients = c; this.chargement = false; this.chargerLogos(c); },
+    this.clientService.rechercher(this.recherche, 'nom', this.pageCourante, this.taillePage).subscribe({
+      next: p => {
+        this.clients = p.content;
+        this.totalElements = p.totalElements;
+        this.totalPages = p.totalPages;
+        this.chargement = false;
+        this.chargerLogos(p.content);
+      },
       error: err => { this.erreur = errorMessage(err); this.chargement = false; }
     });
+  }
+
+  onRechercheTexte(valeur: string): void {
+    this.recherche = valeur;
+    if (this.debounceId) clearTimeout(this.debounceId);
+    this.debounceId = setTimeout(() => { this.pageCourante = 0; this.charger(); }, 300);
+  }
+
+  pagePrecedente(): void {
+    if (this.pageCourante > 0) { this.pageCourante--; this.charger(); }
+  }
+  pageSuivante(): void {
+    if (this.pageCourante + 1 < this.totalPages) { this.pageCourante++; this.charger(); }
   }
 
   /** Charge les logos (en blob, avec le token) des clients qui en ont un et pas encore en cache. */

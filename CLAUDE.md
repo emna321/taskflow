@@ -14,6 +14,12 @@ Projet de formation FullStack (ENSI). Cahiers des charges dans `docs/` : `Cahier
 - Validation centralisee dans `FichierValidationService` (extension + type MIME + signature binaire pour images/PDF + nettoyage du nom de fichier) : reutiliser ce service pour toute nouvelle fonctionnalite de upload plutot que dupliquer la logique.
 - `GlobalExceptionHandler` renvoie 413 (`FileTooLargeException` et `MaxUploadSizeExceededException`) en plus des codes existants.
 
+## Recherche paginee et statistiques
+- Les endpoints `/recherche` (taches, projets, clients) sont des routes DEDIEES et additives, separees des listes existantes (`GET /api/taches` reste inchange, utilise par dashboard/Kanban/fiche projet). Ne jamais transformer une liste existante en reponse paginee : ca casse tout ce qui consomme encore un simple tableau JSON.
+- Filtrage dynamique via `JpaSpecificationExecutor` + classes `*Specifications` dans `repository/spec/`. Reponse paginee enveloppee dans `PageResponse<T>` (jamais `org.springframework.data.domain.Page` serialise directement : deconseille depuis Spring Boot 3, `PageImpl` n'a pas de constructeur par defaut).
+- `StatsService` agrege en memoire (taille de donnees modeste pour ce projet de formation) plutot que via des requetes JPQL `GROUP BY` : plus simple a lire, suffisant ici.
+- Nouvelle entite = verifier `TacheService.delete()` / `ProjetService.delete()` / `ClientService.delete()` : toute table avec une FK vers Tache/Projet (Fichier, Commentaire) doit etre nettoyee explicitement avant suppression (pas d'association JPA bidirectionnelle pour ces entites, donc pas de cascade automatique).
+
 ## Conventions à respecter
 - Backend en couches `controller → service → repository`, avec un DTO (record) en entrée et en sortie. Ne jamais exposer une entité JPA ni le mot de passe.
 - Droits : `@PreAuthorize("hasRole('ADMIN')")` sur les modifications et suppressions, plus les règles dans `SecurityConfig`. Le collaborateur ne change que le statut de SES tâches (`TacheService.changerStatut`).
