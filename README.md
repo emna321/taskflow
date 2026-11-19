@@ -78,6 +78,9 @@ Ouvrir http://localhost:4200. En développement, Angular appelle `http://localho
 | Tâches : modifier, supprimer | ✅ | ❌ (403) |
 | Tâches : changer le statut | toutes | seulement les siennes |
 | Utilisateurs : CRUD + rôles | ✅ | ❌ (403, page bloquée par le Guard) |
+| Pièces jointes (tâches/projets) : envoyer, lister, télécharger | ✅ | ✅ |
+| Pièces jointes : supprimer | ✅ | seulement les siennes (403 sinon) |
+| Logo client / photo de profil : envoyer, consulter | ✅ | ✅ (sa propre photo) |
 
 À l'inscription, l'utilisateur reçoit le rôle **COLLABORATEUR**. L'admin peut ensuite le promouvoir depuis la page *Utilisateurs*.
 
@@ -102,8 +105,20 @@ Toutes les routes sauf `login` et `register` exigent l'en-tête `Authorization: 
 | GET | `/api/users/assignables` | connecté (liste pour affecter une tâche) |
 | GET / POST / PUT / DELETE | `/api/users`, `/api/users/{id}` | ADMIN |
 | PUT | `/api/users/{id}/roles` `{ "roles": ["ADMIN"] }` | ADMIN |
+| POST (multipart) | `/api/taches/{id}/fichiers` (champ `fichier`) | connecté |
+| GET | `/api/taches/{id}/fichiers` | connecté |
+| POST (multipart) | `/api/projets/{id}/fichiers` (champ `fichier`) | connecté |
+| GET | `/api/projets/{id}/fichiers` | connecté |
+| DELETE | `/api/fichiers/{id}` | ADMIN ou l'auteur de l'envoi |
+| GET | `/api/fichiers/{id}/telecharger` | connecté |
+| POST (multipart) | `/api/clients/{id}/logo` (champ `logo`, image 1 Mo max) | connecté |
+| GET | `/api/clients/{id}/logo` | connecté |
+| POST (multipart) | `/api/users/me/photo` (champ `photo`, image 1 Mo max) | connecté |
+| GET | `/api/users/{id}/photo` | connecté |
 
-**Erreurs** : réponse JSON `{ status, message, details }` avec les codes 400 (validation, avec un message par champ), 401 (non connecté / token invalide), 403 (droits insuffisants), 404 (introuvable) et 409 (email déjà utilisé).
+**Erreurs** : réponse JSON `{ status, message, details }` avec les codes 400 (validation ou fichier invalide, avec un message par champ), 401 (non connecté / token invalide), 403 (droits insuffisants), 404 (introuvable), 409 (email déjà utilisé) et 413 (fichier trop volumineux).
+
+**Pièces jointes** : stockées en base (colonne binaire LONGBLOB sur MySQL / bytea sur PostgreSQL), jamais sur le disque — indispensable sur Render dont le plan gratuit ne conserve pas le filesystem. Types acceptés : pdf, doc(x), xls(x), ppt(x), txt, csv, png, jpg, jpeg, webp, zip (5 Mo max, 1 Mo pour le logo/la photo). L'extension, le type MIME et la signature binaire (pour les images et PDF) sont vérifiés côté serveur ; le nom de fichier est nettoyé (chemins et caractères spéciaux retirés).
 
 ---
 
@@ -168,9 +183,19 @@ Pour utiliser les fichiers officiels du template (https://www.creative-tim.com/p
 Voir `docs/diagramme-classes.puml` (s'ouvre avec l'extension PlantUML de VS Code).
 
 ```
-User (id, email, password, tel, nom, prenom)  ── * ⟷ * ──  Role (id, libelle: ADMIN | COLLABORATEUR)
-Client (id, nom, tel, email, adresse)  1 ── *  Projet (id, libelle, budget, duree, description)
+User (id, email, password, tel, nom, prenom, photoContenu, photoTypeMime)  ── * ⟷ * ──  Role (id, libelle: ADMIN | COLLABORATEUR)
+Client (id, nom, tel, email, adresse, logoContenu, logoTypeMime)  1 ── *  Projet (id, libelle, budget, duree, description)
 Projet  1 ── *  Tache (id, titre, description, statut, priorite, dateEcheance)
 User    1 ── *  Tache   (tâche affectée à un utilisateur, facultatif)
+Fichier (id, nomOriginal, typeMime, taille, contenu, dateUpload, idUploadePar) ── *  rattache a 1 Tache OU 1 Projet (jamais les deux)
 ```
-Suppressions : un client supprime ses projets, un projet supprime ses tâches, et un utilisateur supprimé libère ses tâches (elles deviennent non affectées).
+Suppressions : un client supprime ses projets (et leurs pièces jointes), un projet supprime ses tâches et ses documents, et un utilisateur supprimé libère ses tâches (elles deviennent non affectées).
+
+### Portabilité MySQL / PostgreSQL (profil `render`)
+
+Les colonnes binaires (`Fichier.contenu`, `Client.logoContenu`, `User.photoContenu`) sont mappées en `LONGBLOB` sur MySQL et en `bytea` sur PostgreSQL via `@JdbcTypeCode(SqlTypes.VARBINARY)` (évite le mécanisme "large object" OID de PostgreSQL, mal adapté ici). Pour déployer sur Render (base PostgreSQL, disque non persistant) :
+```bash
+docker build -t taskflow .
+docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE=render -e SPRING_DATASOURCE_URL=jdbc:postgresql://HOST:5432/DB -e DB_USER=... -e DB_PASSWORD=... taskflow
+```
+Le `Dockerfile` à la racine construit l'Angular puis le jar Spring Boot ; `backend/src/main/resources/application-render.properties` configure le driver PostgreSQL.

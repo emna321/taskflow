@@ -138,6 +138,8 @@
         <p class="mb-1"><strong>Affectée à :</strong> {{ detail.userNomComplet || 'Non affectée' }}</p>
         <p class="mb-1"><strong>Échéance :</strong> {{ detail.dateEcheance ? (detail.dateEcheance | date: 'dd/MM/yyyy') : '-' }}</p>
         <p><strong>Description :</strong> {{ detail.description || '-' }}</p>
+        <h6 class="mt-4">Pièces jointes</h6>
+        <app-file-upload type="tache" [id]="detail.id" />
       </div>
     </div>
   </div>

@@ -20,7 +20,16 @@
         <tbody>
           @for (c of clientsFiltres; track c.id) {
             <tr>
-              <td class="fw-semibold text-dark">{{ c.nom }}</td>
+              <td class="fw-semibold text-dark">
+                <span class="d-flex align-items-center gap-2">
+                  @if (c.id && logoUrls[c.id]) {
+                    <img [src]="logoUrls[c.id]" alt="" class="client-logo" />
+                  } @else {
+                    <span class="client-logo client-logo-placeholder"><i class="bi bi-building"></i></span>
+                  }
+                  {{ c.nom }}
+                </span>
+              </td>
               <td>{{ c.email || '-' }}</td>
               <td>{{ c.tel || '-' }}</td>
               <td>{{ c.adresse || '-' }}</td>
@@ -48,6 +57,23 @@
         <button class="btn-close ms-auto" (click)="formOuvert = false"></button></div>
       <form class="card-body" [formGroup]="form" (ngSubmit)="enregistrer()" novalidate>
         @if (erreurForm) { <div class="alert alert-danger py-2">{{ erreurForm }}</div> }
+        @if (enEdition?.id; as idEnEdition) {
+          <div class="mb-3">
+            <label class="form-label">Logo</label>
+            <div class="d-flex align-items-center gap-2">
+              @if (logoUrls[idEnEdition]) {
+                <img [src]="logoUrls[idEnEdition]" alt="" class="client-logo-preview" />
+              } @else {
+                <span class="client-logo-preview client-logo-placeholder"><i class="bi bi-building"></i></span>
+              }
+              <label class="btn btn-sm btn-outline-primary mb-0">
+                Changer le logo
+                <input type="file" hidden accept="image/png,image/jpeg,image/webp" (change)="onLogoSelected($event)" />
+              </label>
+            </div>
+            @if (erreurLogo) { <div class="text-danger small mt-1">{{ erreurLogo }}</div> }
+          </div>
+        }
         <div class="mb-3">
           <label class="form-label">Nom *</label>
           <input class="form-control" formControlName="nom" [class.is-invalid]="invalide('nom')" />
@@ -84,6 +110,9 @@
     <div class="card tf-modal" (click)="$event.stopPropagation()">
       <div class="card-header d-flex"><h3>{{ detail.nom }}</h3><button class="btn-close ms-auto" (click)="detail = null"></button></div>
       <div class="card-body">
+        @if (detail.id && logoUrls[detail.id]) {
+          <img [src]="logoUrls[detail.id]" alt="" class="client-logo-preview mb-2" />
+        }
         <p class="mb-1"><i class="bi bi-envelope me-2"></i>{{ detail.email || '-' }}</p>
         <p class="mb-1"><i class="bi bi-telephone me-2"></i>{{ detail.tel || '-' }}</p>
         <p><i class="bi bi-geo-alt me-2"></i>{{ detail.adresse || '-' }}</p>

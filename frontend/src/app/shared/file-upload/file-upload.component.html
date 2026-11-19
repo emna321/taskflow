@@ -1,0 +1,50 @@
+@if (erreur) {
+  <div class="alert alert-danger alert-dismissible py-2">{{ erreur }}<button class="btn-close" (click)="erreur = ''"></button></div>
+}
+
+<div class="file-drop" [class.file-drop-active]="glisseSurvol"
+     (dragover)="$event.preventDefault(); glisseSurvol = true"
+     (dragleave)="glisseSurvol = false"
+     (drop)="onDrop($event)">
+  <i class="bi bi-cloud-upload fs-3 text-muted"></i>
+  <p class="mb-2 text-muted small">Glissez un fichier ici, ou</p>
+  <label class="btn btn-sm btn-outline-primary mb-0">
+    Choisir un fichier
+    <input type="file" hidden (change)="onFileSelected($event)" />
+  </label>
+  <p class="mt-2 mb-0 text-muted file-drop-hint">pdf, doc(x), xls(x), ppt(x), txt, csv, png, jpg, webp, zip — 5 Mo max</p>
+</div>
+
+@if (progression !== null) {
+  <div class="progress mt-2" style="height:6px">
+    <div class="progress-bar" [style.width.%]="progression"></div>
+  </div>
+}
+
+@if (chargement) {
+  <div class="text-center py-3"><span class="spinner-border spinner-border-sm text-primary"></span></div>
+} @else if (fichiers.length === 0) {
+  <p class="text-muted small mt-2 mb-0">Aucune pièce jointe.</p>
+} @else {
+  <ul class="list-group mt-2">
+    @for (f of fichiers; track f.id) {
+      <li class="list-group-item d-flex align-items-center gap-2">
+        <i class="bi {{ icone(f) }} fs-5"></i>
+        <div class="flex-grow-1 overflow-hidden">
+          <div class="text-truncate fw-semibold">{{ f.nomOriginal }}</div>
+          <div class="text-muted file-meta">
+            {{ (f.taille / 1024) | number: '1.0-0' }} Ko · {{ f.uploadeParNom }} · {{ f.dateUpload | date: 'dd/MM/yyyy HH:mm' }}
+          </div>
+        </div>
+        <button class="btn btn-sm btn-outline-secondary btn-icon" title="Télécharger" (click)="telecharger(f)">
+          <i class="bi bi-download"></i>
+        </button>
+        @if (peutSupprimer(f)) {
+          <button class="btn btn-sm btn-outline-danger btn-icon" title="Supprimer" (click)="supprimer(f)">
+            <i class="bi bi-trash"></i>
+          </button>
+        }
+      </li>
+    }
+  </ul>
+}

@@ -3,12 +3,16 @@ package com.taskflow.controller;
 import com.taskflow.dto.RolesRequest;
 import com.taskflow.dto.UserRequest;
 import com.taskflow.dto.UserResponse;
+import com.taskflow.entity.User;
 import com.taskflow.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -62,5 +66,30 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id, Authentication authentication) {
         userService.delete(id, authentication.getName());
+    }
+
+    /** Photo de profil : chacun peut envoyer la sienne, tout utilisateur connecte peut consulter une photo. */
+    @PostMapping("/me/photo")
+    @PreAuthorize("isAuthenticated()")
+    public UserResponse uploaderMaPhoto(@RequestParam("photo") MultipartFile photo, Authentication authentication) {
+        User moi = userService.getEntityByEmail(authentication.getName());
+        userService.uploaderPhoto(moi.getId(), photo);
+        return userService.findById(moi.getId());
+    }
+
+    @GetMapping("/{id}/photo")
+    @PreAuthorize("isAuthenticated()")
+    public ResponseEntity<byte[]> telechargerPhoto(@PathVariable Long id) {
+        User u = userService.getEntity(id);
+        if (u.getPhotoContenu() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        MediaType type;
+        try {
+            type = MediaType.parseMediaType(u.getPhotoTypeMime());
+        } catch (Exception e) {
+            type = MediaType.APPLICATION_OCTET_STREAM;
+        }
+        return ResponseEntity.ok().contentType(type).body(u.getPhotoContenu());
     }
 }

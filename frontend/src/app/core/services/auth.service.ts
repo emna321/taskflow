@@ -45,6 +45,15 @@ export class AuthService {
     return this.currentUser()?.roles?.includes(role) ?? false;
   }
 
+  /** Met a jour l'indicateur hasPhoto apres l'envoi d'une nouvelle photo de profil. */
+  marquerPhoto(hasPhoto: boolean): void {
+    const u = this.currentUser();
+    if (!u) return;
+    const maj = { ...u, hasPhoto };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(maj));
+    this.currentUser.set(maj);
+  }
+
   private load(): AuthResponse | null {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);

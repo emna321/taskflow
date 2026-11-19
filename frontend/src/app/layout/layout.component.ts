@@ -1,8 +1,9 @@
-import { Component, inject } from '@angular/core';
+import { Component, effect, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AuthService } from '../core/services/auth.service';
+import { FichierService } from '../core/services/fichier.service';
 
 interface NavItem { path: string; label: string; icon: string; color: string; adminOnly?: boolean; }
 
@@ -15,7 +16,27 @@ interface NavItem { path: string; label: string; icon: string; color: string; ad
 export class LayoutComponent {
   auth = inject(AuthService);
   private router = inject(Router);
+  private fichierService = inject(FichierService);
   menuOuvert = false;
+
+  /** Photo de l'utilisateur connecte, chargee en blob (jamais via une URL directe avec le token). */
+  readonly photoUrl = signal<string | null>(null);
+
+  constructor() {
+    let urlPrecedente: string | null = null;
+    effect(() => {
+      const u = this.auth.currentUser();
+      if (u?.hasPhoto) {
+        this.fichierService.getPhotoBlob(u.id).subscribe(blob => {
+          if (urlPrecedente) URL.revokeObjectURL(urlPrecedente);
+          urlPrecedente = URL.createObjectURL(blob);
+          this.photoUrl.set(urlPrecedente);
+        });
+      } else {
+        this.photoUrl.set(null);
+      }
+    });
+  }
 
   readonly navItems: NavItem[] = [
     { path: '/dashboard', label: 'Tableau de bord', icon: 'bi-tv', color: 'text-primary' },
@@ -44,6 +65,7 @@ export class LayoutComponent {
   }
 
   private titreDepuisUrl(url: string): string {
+    if (url.startsWith('/profil')) return 'Mon profil';
     return this.navItems.find(i => url.startsWith(i.path))?.label ?? 'TaskFlow';
   }
 }

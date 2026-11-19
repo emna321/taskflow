@@ -1,11 +1,15 @@
 package com.taskflow.controller;
 
 import com.taskflow.dto.ClientDto;
+import com.taskflow.entity.Client;
 import com.taskflow.service.ClientService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.List;
 
@@ -48,5 +52,26 @@ public class ClientController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id) {
         clientService.delete(id);
+    }
+
+    @PostMapping("/{id}/logo")
+    public ClientDto uploaderLogo(@PathVariable Long id, @RequestParam("logo") MultipartFile logo) {
+        clientService.uploaderLogo(id, logo);
+        return clientService.findById(id);
+    }
+
+    @GetMapping("/{id}/logo")
+    public ResponseEntity<byte[]> telechargerLogo(@PathVariable Long id) {
+        Client c = clientService.getEntity(id);
+        if (c.getLogoContenu() == null) {
+            return ResponseEntity.notFound().build();
+        }
+        MediaType type;
+        try {
+            type = MediaType.parseMediaType(c.getLogoTypeMime());
+        } catch (Exception e) {
+            type = MediaType.APPLICATION_OCTET_STREAM;
+        }
+        return ResponseEntity.ok().contentType(type).body(c.getLogoContenu());
     }
 }

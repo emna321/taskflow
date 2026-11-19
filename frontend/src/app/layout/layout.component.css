@@ -19,6 +19,7 @@
 .avatar {
   width: 38px; height: 38px; border-radius: 50%; background: #fff; color: var(--tf-primary);
   display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: .8rem;
+  object-fit: cover;
 }
 .sidenav-backdrop { position: fixed; inset: 0; background: rgba(0,0,0,.3); z-index: 1030; }
 

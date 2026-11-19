@@ -37,7 +37,9 @@ class ClientServiceTest {
 
     @Test
     void findAll_renvoieTousLesClients() {
-        when(clientRepository.findAll()).thenReturn(List.of(client(1L, "Alpha"), client(2L, "Beta")));
+        when(clientRepository.findAllAsDto()).thenReturn(List.of(
+                new ClientDto(1L, "Alpha", null, "alpha@mail.com", null, 0, false),
+                new ClientDto(2L, "Beta", null, "beta@mail.com", null, 0, false)));
 
         List<ClientDto> result = clientService.findAll();
 
@@ -52,7 +54,7 @@ class ClientServiceTest {
             return c;
         });
 
-        ClientDto created = clientService.create(new ClientDto(null, "  Gamma ", "22123456", "g@mail.com", "Tunis", null));
+        ClientDto created = clientService.create(new ClientDto(null, "  Gamma ", "22123456", "g@mail.com", "Tunis", null, null));
 
         assertThat(created.id()).isEqualTo(10L);
         assertThat(created.nom()).isEqualTo("Gamma");
@@ -65,7 +67,7 @@ class ClientServiceTest {
         when(clientRepository.findById(1L)).thenReturn(Optional.of(existant));
         when(clientRepository.save(existant)).thenReturn(existant);
 
-        ClientDto updated = clientService.update(1L, new ClientDto(null, "Nouveau", null, "n@mail.com", "Sousse", null));
+        ClientDto updated = clientService.update(1L, new ClientDto(null, "Nouveau", null, "n@mail.com", "Sousse", null, null));
 
         assertThat(updated.nom()).isEqualTo("Nouveau");
         assertThat(updated.adresse()).isEqualTo("Sousse");

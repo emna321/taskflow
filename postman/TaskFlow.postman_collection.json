@@ -44,6 +44,10 @@
     {
       "key": "tacheAutre",
       "value": ""
+    },
+    {
+      "key": "fichierId",
+      "value": ""
     }
   ],
   "item": [
@@ -1132,7 +1136,320 @@
       ]
     },
     {
-      "name": "5. Utilisateurs (admin)",
+      "name": "5. Fichiers (pieces jointes, logo, photo)",
+      "description": "Les requetes d'envoi (POST avec form-data) exigent un fichier joint manuellement : ouvrir Body > form-data, cle 'fichier'/'logo'/'photo' de type File, choisir un fichier sur le disque avant d'executer la requete.",
+      "item": [
+        {
+          "name": "Envoyer une piece jointe sur une tache",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/taches/{{tacheId}}/fichiers",
+              "host": ["{{baseUrl}}"],
+              "path": ["taches", "{{tacheId}}", "fichiers"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "fichier", "type": "file", "src": [] }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 201\", () => pm.response.to.have.status(201));",
+                  "if (pm.response.code === 201) { pm.collectionVariables.set(\"fichierId\", pm.response.json().id); pm.test(\"Pas de contenu binaire dans la reponse\", () => pm.expect(pm.response.json().contenu).to.be.undefined); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Lister les pieces jointes de la tache",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/taches/{{tacheId}}/fichiers",
+              "host": ["{{baseUrl}}"],
+              "path": ["taches", "{{tacheId}}", "fichiers"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Reponse = tableau\", () => pm.expect(pm.response.json()).to.be.an(\"array\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Telecharger la piece jointe",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/fichiers/{{fichierId}}/telecharger",
+              "host": ["{{baseUrl}}"],
+              "path": ["fichiers", "{{fichierId}}", "telecharger"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "pm.test(\"Content-Disposition present\", () => pm.expect(pm.response.headers.get(\"Content-Disposition\")).to.include(\"attachment\"));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Telecharger sans token (401)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/fichiers/{{fichierId}}/telecharger",
+              "host": ["{{baseUrl}}"],
+              "path": ["fichiers", "{{fichierId}}", "telecharger"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 401\", () => pm.response.to.have.status(401));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Envoyer un type de fichier interdit (400)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/taches/{{tacheId}}/fichiers",
+              "host": ["{{baseUrl}}"],
+              "path": ["taches", "{{tacheId}}", "fichiers"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "fichier", "type": "file", "src": [], "description": "Joindre un fichier .exe ou .zip renomme en .sh (type non autorise)" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 400\", () => pm.response.to.have.status(400));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Envoyer un fichier trop volumineux (413)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/taches/{{tacheId}}/fichiers",
+              "host": ["{{baseUrl}}"],
+              "path": ["taches", "{{tacheId}}", "fichiers"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "fichier", "type": "file", "src": [], "description": "Joindre un fichier de plus de 5 Mo" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 413\", () => pm.response.to.have.status(413));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Supprimer la piece jointe (collaborateur non-auteur, 403)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{collabToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/fichiers/{{fichierId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["fichiers", "{{fichierId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 403 (ni admin ni auteur)\", () => pm.response.to.have.status(403));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Supprimer la piece jointe (admin)",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/fichiers/{{fichierId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["fichiers", "{{fichierId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 204\", () => pm.response.to.have.status(204));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Envoyer le logo du client (admin)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clients/{{clientId}}/logo",
+              "host": ["{{baseUrl}}"],
+              "path": ["clients", "{{clientId}}", "logo"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "logo", "type": "file", "src": [], "description": "Joindre une image png/jpg/webp de moins de 1 Mo" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200\", () => pm.response.to.have.status(200));",
+                  "if (pm.response.code === 200) { pm.test(\"hasLogo = true\", () => pm.expect(pm.response.json().hasLogo).to.eql(true)); }"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Recuperer le logo du client",
+          "request": {
+            "method": "GET",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{adminToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/clients/{{clientId}}/logo",
+              "host": ["{{baseUrl}}"],
+              "path": ["clients", "{{clientId}}", "logo"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200 ou 404 (pas de logo)\", () => pm.expect([200,404]).to.include(pm.response.code));"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Envoyer ma photo de profil (collaborateur)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Authorization", "value": "Bearer {{collabToken}}" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/users/me/photo",
+              "host": ["{{baseUrl}}"],
+              "path": ["users", "me", "photo"]
+            },
+            "body": {
+              "mode": "formdata",
+              "formdata": [
+                { "key": "photo", "type": "file", "src": [], "description": "Joindre une image png/jpg/webp de moins de 1 Mo" }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test(\"Statut 200 (un collaborateur peut modifier sa propre photo)\", () => pm.response.to.have.status(200));"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "6. Utilisateurs (admin)",
       "item": [
         {
           "name": "Lister utilisateurs",
@@ -1375,7 +1692,7 @@
       ]
     },
     {
-      "name": "6. Securite et droits",
+      "name": "7. Securite et droits",
       "item": [
         {
           "name": "Sans token -> 401",
@@ -1689,7 +2006,7 @@
       ]
     },
     {
-      "name": "7. Nettoyage (admin)",
+      "name": "8. Nettoyage (admin)",
       "item": [
         {
           "name": "Supprimer tache",

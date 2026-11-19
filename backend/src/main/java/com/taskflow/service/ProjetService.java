@@ -4,6 +4,7 @@ import com.taskflow.dto.ProjetRequest;
 import com.taskflow.dto.ProjetResponse;
 import com.taskflow.entity.Projet;
 import com.taskflow.exception.ResourceNotFoundException;
+import com.taskflow.repository.FichierRepository;
 import com.taskflow.repository.ProjetRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,10 +16,13 @@ public class ProjetService {
 
     private final ProjetRepository projetRepository;
     private final ClientService clientService;
+    private final FichierRepository fichierRepository;
 
-    public ProjetService(ProjetRepository projetRepository, ClientService clientService) {
+    public ProjetService(ProjetRepository projetRepository, ClientService clientService,
+                         FichierRepository fichierRepository) {
         this.projetRepository = projetRepository;
         this.clientService = clientService;
+        this.fichierRepository = fichierRepository;
     }
 
     @Transactional(readOnly = true)
@@ -46,9 +50,13 @@ public class ProjetService {
         return ProjetResponse.from(projetRepository.save(p));
     }
 
+    /** Supprime le projet, ses fichiers, et ceux de ses taches (cascade avant suppression des taches). */
     @Transactional
     public void delete(Long id) {
-        projetRepository.delete(getEntity(id));
+        Projet p = getEntity(id);
+        p.getTaches().forEach(t -> fichierRepository.deleteByTacheId(t.getId()));
+        fichierRepository.deleteByProjetId(p.getId());
+        projetRepository.delete(p);
     }
 
     public Projet getEntity(Long id) {

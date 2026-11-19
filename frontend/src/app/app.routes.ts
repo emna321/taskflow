@@ -9,6 +9,7 @@ import { ClientsComponent } from './pages/clients/clients.component';
 import { ProjetsComponent } from './pages/projets/projets.component';
 import { TachesComponent } from './pages/taches/taches.component';
 import { UsersComponent } from './pages/users/users.component';
+import { ProfilComponent } from './pages/profil/profil.component';
 
 export const routes: Routes = [
   // Visiteur : uniquement connexion et inscription
@@ -26,6 +27,7 @@ export const routes: Routes = [
       { path: 'projets', component: ProjetsComponent },
       { path: 'taches', component: TachesComponent },
       { path: 'users', component: UsersComponent, canActivate: [roleGuard], data: { roles: ['ADMIN'] } },
+      { path: 'profil', component: ProfilComponent },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' }
     ]
   },

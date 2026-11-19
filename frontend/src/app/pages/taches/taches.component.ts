@@ -5,13 +5,14 @@ import { AuthService } from '../../core/services/auth.service';
 import { ProjetService } from '../../core/services/projet.service';
 import { TacheService } from '../../core/services/tache.service';
 import { UserService } from '../../core/services/user.service';
+import { FileUploadComponent } from '../../shared/file-upload/file-upload.component';
 import {
   PRIORITE_LABELS, Priorite, Projet, STATUT_LABELS, Statut, Tache, TacheRequest, User, errorMessage
 } from '../../core/models';
 
 @Component({
   selector: 'app-taches',
-  imports: [ReactiveFormsModule, DatePipe],
+  imports: [ReactiveFormsModule, DatePipe, FileUploadComponent],
   templateUrl: './taches.component.html'
 })
 export class TachesComponent implements OnInit {

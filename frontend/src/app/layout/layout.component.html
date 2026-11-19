@@ -17,6 +17,11 @@
   <h6 class="nav-heading">Compte</h6>
   <ul class="nav flex-column">
     <li class="nav-item">
+      <a class="nav-link" routerLink="/profil" routerLinkActive="active" (click)="menuOuvert = false">
+        <i class="bi bi-person-circle text-muted"></i> Mon profil
+      </a>
+    </li>
+    <li class="nav-item">
       <a class="nav-link" href="" (click)="$event.preventDefault(); auth.logout()">
         <i class="bi bi-box-arrow-right text-muted"></i> Déconnexion
       </a>
@@ -36,7 +41,11 @@
         <h4 class="text-white text-uppercase mb-0 page-title">{{ titre() }}</h4>
         <div class="ms-auto d-flex align-items-center gap-3 user-box">
           @if (auth.currentUser(); as u) {
-            <span class="avatar">{{ initiales }}</span>
+            @if (photoUrl()) {
+              <img [src]="photoUrl()" alt="" class="avatar" />
+            } @else {
+              <span class="avatar">{{ initiales }}</span>
+            }
             <div class="d-none d-md-block lh-sm">
               <div class="text-white fw-semibold">{{ u.prenom }} {{ u.nom }}</div>
               <small class="text-white-50">{{ auth.isAdmin() ? 'Administrateur' : 'Collaborateur' }}</small>

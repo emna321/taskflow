@@ -11,10 +11,11 @@ public record ClientDto(
         @Pattern(regexp = "^$|^[0-9+ ]{8,15}$", message = "Telephone invalide") String tel,
         @Email(message = "Email invalide") String email,
         String adresse,
-        Integer nbProjets) {
+        Integer nbProjets,
+        Boolean hasLogo) {
 
     public static ClientDto from(Client c) {
         return new ClientDto(c.getId(), c.getNom(), c.getTel(), c.getEmail(), c.getAdresse(),
-                c.getProjets() == null ? 0 : c.getProjets().size());
+                c.getProjets() == null ? 0 : c.getProjets().size(), c.getLogoContenu() != null);
     }
 }

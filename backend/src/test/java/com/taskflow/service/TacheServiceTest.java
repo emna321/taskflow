@@ -3,6 +3,7 @@ package com.taskflow.service;
 import com.taskflow.dto.TacheRequest;
 import com.taskflow.dto.TacheResponse;
 import com.taskflow.entity.*;
+import com.taskflow.repository.FichierRepository;
 import com.taskflow.repository.TacheRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -26,6 +27,7 @@ class TacheServiceTest {
     @Mock private TacheRepository tacheRepository;
     @Mock private ProjetService projetService;
     @Mock private UserService userService;
+    @Mock private FichierRepository fichierRepository;
 
     @InjectMocks
     private TacheService tacheService;
@@ -100,6 +102,16 @@ class TacheServiceTest {
         TacheResponse r = tacheService.changerStatut(100L, Statut.TERMINEE, "admin@taskflow.com", true);
 
         assertThat(r.statut()).isEqualTo(Statut.TERMINEE);
+    }
+
+    @Test
+    void delete_supprimeAussiLesFichiersRattaches() {
+        when(tacheRepository.findById(100L)).thenReturn(Optional.of(tacheDeSami));
+
+        tacheService.delete(100L);
+
+        verify(fichierRepository).deleteByTacheId(100L);
+        verify(tacheRepository).delete(tacheDeSami);
     }
 
     @Test

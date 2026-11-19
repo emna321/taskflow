@@ -5,11 +5,12 @@ import { AuthService } from '../../core/services/auth.service';
 import { ClientService } from '../../core/services/client.service';
 import { ProjetService } from '../../core/services/projet.service';
 import { TacheService } from '../../core/services/tache.service';
+import { FileUploadComponent } from '../../shared/file-upload/file-upload.component';
 import { Client, Projet, ProjetRequest, STATUT_LABELS, Tache, errorMessage } from '../../core/models';
 
 @Component({
   selector: 'app-projets',
-  imports: [ReactiveFormsModule, DecimalPipe],
+  imports: [ReactiveFormsModule, DecimalPipe, FileUploadComponent],
   templateUrl: './projets.component.html'
 })
 export class ProjetsComponent implements OnInit {

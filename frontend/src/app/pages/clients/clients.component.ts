@@ -1,9 +1,13 @@
 import { Component, OnInit, inject } from '@angular/core';
+import { HttpEventType } from '@angular/common/http';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { AuthService } from '../../core/services/auth.service';
 import { ClientService } from '../../core/services/client.service';
 import { ProjetService } from '../../core/services/projet.service';
+import { FichierService } from '../../core/services/fichier.service';
 import { Client, Projet, errorMessage } from '../../core/models';
+
+const TAILLE_MAX_LOGO = 1024 * 1024;
 
 @Component({
   selector: 'app-clients',
@@ -15,12 +19,16 @@ export class ClientsComponent implements OnInit {
   private fb = inject(FormBuilder);
   private clientService = inject(ClientService);
   private projetService = inject(ProjetService);
+  private fichierService = inject(FichierService);
 
   clients: Client[] = [];
   recherche = '';
   chargement = true;
   erreur = '';
   message = '';
+  erreurLogo = '';
+  /** URL (blob) des logos deja charges, indexees par id client. */
+  logoUrls: Record<number, string> = {};
 
   // Formulaire ajout / modification
   formOuvert = false;
@@ -48,8 +56,44 @@ export class ClientsComponent implements OnInit {
   charger(): void {
     this.chargement = true;
     this.clientService.getAll().subscribe({
-      next: c => { this.clients = c; this.chargement = false; },
+      next: c => { this.clients = c; this.chargement = false; this.chargerLogos(c); },
       error: err => { this.erreur = errorMessage(err); this.chargement = false; }
+    });
+  }
+
+  /** Charge les logos (en blob, avec le token) des clients qui en ont un et pas encore en cache. */
+  private chargerLogos(clients: Client[]): void {
+    for (const c of clients) {
+      if (c.id && c.hasLogo && !this.logoUrls[c.id]) {
+        this.fichierService.getLogoBlob(c.id).subscribe(blob => this.logoUrls[c.id!] = URL.createObjectURL(blob));
+      }
+    }
+  }
+
+  onLogoSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const fichier = input.files?.[0];
+    input.value = '';
+    if (!fichier || !this.enEdition?.id) return;
+    if (!/\.(png|jpe?g|webp)$/i.test(fichier.name)) {
+      this.erreurLogo = 'Formats acceptés : png, jpg, webp.';
+      return;
+    }
+    if (fichier.size > TAILLE_MAX_LOGO) {
+      this.erreurLogo = 'Image trop volumineuse (1 Mo max).';
+      return;
+    }
+    this.erreurLogo = '';
+    const clientId = this.enEdition.id;
+    this.fichierService.uploaderLogo(clientId, fichier).subscribe({
+      next: evt => {
+        if (evt.type === HttpEventType.Response) {
+          this.logoUrls[clientId] = URL.createObjectURL(fichier);
+          this.message = 'Logo mis à jour.';
+          this.charger();
+        }
+      },
+      error: err => this.erreurLogo = errorMessage(err)
     });
   }
 
@@ -62,6 +106,7 @@ export class ClientsComponent implements OnInit {
     this.enEdition = null;
     this.form.reset();
     this.erreurForm = '';
+    this.erreurLogo = '';
     this.formOuvert = true;
   }
 
@@ -69,6 +114,7 @@ export class ClientsComponent implements OnInit {
     this.enEdition = c;
     this.form.reset({ nom: c.nom, email: c.email ?? '', tel: c.tel ?? '', adresse: c.adresse ?? '' });
     this.erreurForm = '';
+    this.erreurLogo = '';
     this.formOuvert = true;
   }
 

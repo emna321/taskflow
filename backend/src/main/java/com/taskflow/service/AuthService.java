@@ -78,7 +78,7 @@ public class AuthService {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
         UserResponse u = UserResponse.from(user);
-        return new AuthResponse(token, u.id(), u.email(), u.nom(), u.prenom(), u.roles());
+        return new AuthResponse(token, u.id(), u.email(), u.nom(), u.prenom(), u.roles(), u.hasPhoto());
     }
 
     @Transactional(readOnly = true)

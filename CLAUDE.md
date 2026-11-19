@@ -3,9 +3,16 @@
 Projet de formation FullStack (ENSI). Cahiers des charges dans `docs/` : `Cahier_des_charges_TaskFlow.pdf` (le projet) et `CDC_Projects_Manager_prof.pdf` (les étapes demandées par l'enseignante). Le README détaille le lancement et la correspondance avec le CDC.
 
 ## Stack
-- `backend/` : Spring Boot 3.3, Java 17, Maven, MySQL, Spring Security + JWT (jjwt 0.12), Bean Validation, JavaMail. Package racine `com.taskflow`.
+- `backend/` : Spring Boot 3.3, Java 17, Maven, MySQL (+ PostgreSQL via le profil `render`, voir `application-render.properties`), Spring Security + JWT (jjwt 0.12), Bean Validation, JavaMail. Package racine `com.taskflow`.
 - `frontend/` : Angular 19 standalone, Bootstrap 5 avec la charte Argon Dashboard, routage par hash.
 - `ng build` écrit dans `backend/src/main/resources/static/` (ne jamais éditer ce dossier à la main).
+- Port 8080 est occupé par Oracle XE sur cette machine : le backend tourne sur `server.port=${SERVER_PORT:8089}` et le frontend dev pointe sur `http://localhost:8089/api` (`environment.development.ts`).
+
+## Pieces jointes, logo, photo (fichiers en base)
+- Tout fichier (piece jointe de tache/projet, logo client, photo utilisateur) est stocke en base (jamais sur le disque, requis pour Render). Colonnes binaires via `@JdbcTypeCode(SqlTypes.VARBINARY)` (PAS `@Lob` seul, qui basculerait PostgreSQL sur un "large object" OID) : LONGBLOB sur MySQL, bytea sur PostgreSQL.
+- Toute requete qui LISTE des fichiers (ou des clients/users) doit passer par une projection JPQL qui exclut la colonne binaire (`FichierRepository.findMetaByTacheId`, `ClientRepository.findAllAsDto`) — ne jamais `findAll()` puis mapper une entite qui porte un `byte[]` dans un DTO de liste.
+- Validation centralisee dans `FichierValidationService` (extension + type MIME + signature binaire pour images/PDF + nettoyage du nom de fichier) : reutiliser ce service pour toute nouvelle fonctionnalite de upload plutot que dupliquer la logique.
+- `GlobalExceptionHandler` renvoie 413 (`FileTooLargeException` et `MaxUploadSizeExceededException`) en plus des codes existants.
 
 ## Conventions à respecter
 - Backend en couches `controller → service → repository`, avec un DTO (record) en entrée et en sortie. Ne jamais exposer une entité JPA ni le mot de passe.

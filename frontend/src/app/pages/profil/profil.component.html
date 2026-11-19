@@ -1,0 +1,32 @@
+@if (message) { <div class="alert alert-success alert-dismissible">{{ message }}<button class="btn-close" (click)="message=''"></button></div> }
+@if (erreur) { <div class="alert alert-danger alert-dismissible">{{ erreur }}<button class="btn-close" (click)="erreur=''"></button></div> }
+
+<div class="card">
+  <div class="card-header"><h3>Mon profil</h3></div>
+  <div class="card-body">
+    <div class="d-flex align-items-center gap-3 mb-4">
+      @if (photoUrl) {
+        <img [src]="photoUrl" alt="" class="avatar-lg" />
+      } @else {
+        <span class="avatar-lg">{{ initiales }}</span>
+      }
+      <div>
+        <label class="btn btn-sm btn-outline-primary mb-0">
+          Changer la photo
+          <input type="file" hidden accept="image/png,image/jpeg,image/webp" (change)="onPhotoSelected($event)" />
+        </label>
+        <p class="text-muted mt-1 mb-0" style="font-size:.75rem">png, jpg, webp — 1 Mo max</p>
+      </div>
+    </div>
+
+    @if (progression !== null) {
+      <div class="progress mb-3" style="height:6px"><div class="progress-bar" [style.width.%]="progression"></div></div>
+    }
+
+    @if (auth.currentUser(); as u) {
+      <p class="mb-1"><strong>Nom :</strong> {{ u.prenom }} {{ u.nom }}</p>
+      <p class="mb-1"><strong>Email :</strong> {{ u.email }}</p>
+      <p class="mb-0"><strong>Rôle :</strong> {{ auth.isAdmin() ? 'Administrateur' : 'Collaborateur' }}</p>
+    }
+  </div>
+</div>

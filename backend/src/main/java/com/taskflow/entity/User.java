@@ -1,6 +1,8 @@
 package com.taskflow.entity;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -30,6 +32,14 @@ public class User {
     @Column(nullable = false)
     private String prenom;
 
+    /** Photo de profil (image seule, 1 Mo max) : stockee en base, jamais chargee dans les listes. */
+    @JdbcTypeCode(SqlTypes.VARBINARY)
+    @Column(length = 2097152)
+    private byte[] photoContenu;
+
+    @Column(length = 100)
+    private String photoTypeMime;
+
     /** User - Role : Many-to-Many */
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_roles",
@@ -55,6 +65,10 @@ public class User {
     public void setNom(String nom) { this.nom = nom; }
     public String getPrenom() { return prenom; }
     public void setPrenom(String prenom) { this.prenom = prenom; }
+    public byte[] getPhotoContenu() { return photoContenu; }
+    public void setPhotoContenu(byte[] photoContenu) { this.photoContenu = photoContenu; }
+    public String getPhotoTypeMime() { return photoTypeMime; }
+    public void setPhotoTypeMime(String photoTypeMime) { this.photoTypeMime = photoTypeMime; }
     public Set<Role> getRoles() { return roles; }
     public void setRoles(Set<Role> roles) { this.roles = roles; }
     public List<Tache> getTaches() { return taches; }

@@ -9,6 +9,7 @@ export interface AuthResponse {
   nom: string;
   prenom: string;
   roles: RoleName[];
+  hasPhoto?: boolean;
 }
 
 export interface LoginRequest { email: string; password: string; }
@@ -18,7 +19,7 @@ export interface RegisterRequest {
 }
 
 export interface User {
-  id: number; email: string; tel?: string; nom: string; prenom: string; roles: RoleName[];
+  id: number; email: string; tel?: string; nom: string; prenom: string; roles: RoleName[]; hasPhoto?: boolean;
 }
 
 export interface UserRequest {
@@ -26,7 +27,12 @@ export interface UserRequest {
 }
 
 export interface Client {
-  id?: number; nom: string; tel?: string; email?: string; adresse?: string; nbProjets?: number;
+  id?: number; nom: string; tel?: string; email?: string; adresse?: string; nbProjets?: number; hasLogo?: boolean;
+}
+
+export interface FichierMeta {
+  id: number; nomOriginal: string; typeMime: string; taille: number; dateUpload: string;
+  uploadeParId: number; uploadeParNom: string;
 }
 
 export interface Projet {

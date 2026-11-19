@@ -103,6 +103,8 @@
               <span class="ms-auto text-muted">{{ statutLabels[t.statut] }} · {{ t.userNomComplet || 'Non affectée' }}</span></li>
           } @empty { <li class="list-group-item text-muted">Aucune tâche.</li> }
         </ul>
+        <h6 class="mt-4">Documents du projet</h6>
+        <app-file-upload type="projet" [id]="detail.id" />
       </div>
     </div>
   </div>

@@ -83,6 +83,17 @@ h1, h2, h3, h4, h5, h6 { color: var(--tf-default); font-weight: 600; }
 .empty-state { text-align: center; padding: 3rem 1rem; color: var(--tf-muted); }
 .empty-state i { font-size: 2.5rem; display: block; margin-bottom: .5rem; }
 
+/* ----- Logo client / photo de profil ----- */
+.client-logo, .client-logo-placeholder { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.client-logo-preview { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; flex-shrink: 0; }
+.client-logo-placeholder {
+  display: inline-flex; align-items: center; justify-content: center; background: var(--tf-bg); color: var(--tf-muted);
+}
+.avatar-lg {
+  width: 80px; height: 80px; border-radius: 50%; object-fit: cover; background: #fff; color: var(--tf-primary);
+  display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 1.5rem;
+}
+
 /* ----- Panneau formulaire (fenetre modale simple) ----- */
 .tf-backdrop { position: fixed; inset: 0; background: rgba(23,43,77,.45); z-index: 1050; display: flex; align-items: flex-start; justify-content: center; overflow-y: auto; padding: 3rem 1rem; }
 .tf-modal { width: 100%; max-width: 640px; }

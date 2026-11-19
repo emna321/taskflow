@@ -6,6 +6,7 @@ import com.taskflow.entity.Priorite;
 import com.taskflow.entity.Statut;
 import com.taskflow.entity.Tache;
 import com.taskflow.exception.ResourceNotFoundException;
+import com.taskflow.repository.FichierRepository;
 import com.taskflow.repository.TacheRepository;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Service;
@@ -19,11 +20,14 @@ public class TacheService {
     private final TacheRepository tacheRepository;
     private final ProjetService projetService;
     private final UserService userService;
+    private final FichierRepository fichierRepository;
 
-    public TacheService(TacheRepository tacheRepository, ProjetService projetService, UserService userService) {
+    public TacheService(TacheRepository tacheRepository, ProjetService projetService, UserService userService,
+                        FichierRepository fichierRepository) {
         this.tacheRepository = tacheRepository;
         this.projetService = projetService;
         this.userService = userService;
+        this.fichierRepository = fichierRepository;
     }
 
     @Transactional(readOnly = true)
@@ -60,7 +64,9 @@ public class TacheService {
 
     @Transactional
     public void delete(Long id) {
-        tacheRepository.delete(getEntity(id));
+        Tache t = getEntity(id);
+        fichierRepository.deleteByTacheId(t.getId());
+        tacheRepository.delete(t);
     }
 
     /**
@@ -78,7 +84,7 @@ public class TacheService {
         return TacheResponse.from(tacheRepository.save(t));
     }
 
-    private Tache getEntity(Long id) {
+    public Tache getEntity(Long id) {
         return tacheRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Tache introuvable (id=" + id + ")"));
     }

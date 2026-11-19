@@ -14,7 +14,9 @@ import com.taskflow.repository.UserRepository;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -27,13 +29,16 @@ public class UserService {
     private final RoleRepository roleRepository;
     private final TacheRepository tacheRepository;
     private final PasswordEncoder passwordEncoder;
+    private final FichierValidationService fichierValidationService;
 
     public UserService(UserRepository userRepository, RoleRepository roleRepository,
-                       TacheRepository tacheRepository, PasswordEncoder passwordEncoder) {
+                       TacheRepository tacheRepository, PasswordEncoder passwordEncoder,
+                       FichierValidationService fichierValidationService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.tacheRepository = tacheRepository;
         this.passwordEncoder = passwordEncoder;
+        this.fichierValidationService = fichierValidationService;
     }
 
     @Transactional(readOnly = true)
@@ -98,6 +103,24 @@ public class UserService {
     public User getEntity(Long id) {
         return userRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable (id=" + id + ")"));
+    }
+
+    public User getEntityByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("Utilisateur introuvable"));
+    }
+
+    @Transactional
+    public void uploaderPhoto(Long id, MultipartFile fichier) {
+        User u = getEntity(id);
+        fichierValidationService.validerImage(fichier);
+        try {
+            u.setPhotoContenu(fichier.getBytes());
+        } catch (IOException e) {
+            throw new BadRequestException("Impossible de lire le fichier envoye");
+        }
+        u.setPhotoTypeMime(fichier.getContentType());
+        userRepository.save(u);
     }
 
     private void apply(User u, UserRequest req) {

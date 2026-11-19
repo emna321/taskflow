@@ -13,6 +13,8 @@ class User {
   - tel : String
   - nom : String
   - prenom : String
+  - photoContenu : byte[]  <<LONGBLOB/bytea>>
+  - photoTypeMime : String
 }
 class Role {
   - id : Long
@@ -24,6 +26,8 @@ class Client {
   - tel : String
   - email : String
   - adresse : String
+  - logoContenu : byte[]  <<LONGBLOB/bytea>>
+  - logoTypeMime : String
 }
 class Projet {
   - id : Long
@@ -40,6 +44,14 @@ class Tache {
   - priorite : Priorite
   - dateEcheance : LocalDate
 }
+class Fichier {
+  - id : Long
+  - nomOriginal : String
+  - typeMime : String
+  - taille : Long
+  - contenu : byte[]  <<LONGBLOB/bytea>>
+  - dateUpload : LocalDateTime
+}
 
 User "*" -- "*" Role : possede >
 Client "1" -- "*" Projet : a >
@@ -48,4 +60,11 @@ User "0..1" -- "*" Tache : est affecte a <
 Role ..> RoleName
 Tache ..> Statut
 Tache ..> Priorite
+Fichier "*" -- "1" User : envoye par >
+Fichier "*" -- "0..1" Tache : piece jointe de >
+Fichier "*" -- "0..1" Projet : document de >
+note right of Fichier
+  Rattache a une Tache OU un Projet
+  (jamais les deux), verifie en service.
+end note
 @enduml
