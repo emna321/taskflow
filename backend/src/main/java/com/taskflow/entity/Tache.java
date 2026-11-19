@@ -1,5 +1,6 @@
 package com.taskflow.entity;
 
+import org.hibernate.annotations.ColumnDefault;
 import jakarta.persistence.*;
 
 import java.time.LocalDate;
@@ -28,6 +29,11 @@ public class Tache {
 
     private LocalDate dateEcheance;
 
+    /** Evite les doublons : passe a true une fois le rappel d'echeance envoye par email. */
+    @Column(nullable = false)
+    @ColumnDefault("false") // indispensable pour ajouter la colonne a une table PostgreSQL deja remplie
+    private boolean rappelEnvoye = false;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_projet", nullable = false)
     private Projet projet;
@@ -51,6 +57,8 @@ public class Tache {
     public void setPriorite(Priorite priorite) { this.priorite = priorite; }
     public LocalDate getDateEcheance() { return dateEcheance; }
     public void setDateEcheance(LocalDate dateEcheance) { this.dateEcheance = dateEcheance; }
+    public boolean isRappelEnvoye() { return rappelEnvoye; }
+    public void setRappelEnvoye(boolean rappelEnvoye) { this.rappelEnvoye = rappelEnvoye; }
     public Projet getProjet() { return projet; }
     public void setProjet(Projet projet) { this.projet = projet; }
     public User getUser() { return user; }

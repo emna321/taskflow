@@ -32,15 +32,18 @@ public class AuthService {
     private final AuthenticationManager authenticationManager;
     private final JwtService jwtService;
     private final EmailService emailService;
+    private final ActiviteService activiteService;
 
     public AuthService(UserRepository userRepository, RoleRepository roleRepository, PasswordEncoder passwordEncoder,
-                       AuthenticationManager authenticationManager, JwtService jwtService, EmailService emailService) {
+                       AuthenticationManager authenticationManager, JwtService jwtService, EmailService emailService,
+                       ActiviteService activiteService) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
         this.jwtService = jwtService;
         this.emailService = emailService;
+        this.activiteService = activiteService;
     }
 
     /** Inscription : role COLLABORATEUR par defaut + email a l'admin. */
@@ -63,6 +66,7 @@ public class AuthService {
         User saved = userRepository.save(user);
 
         emailService.notifierAdminInscription(saved);
+        activiteService.enregistrer(saved, saved.getPrenom() + " " + saved.getNom() + " a créé un compte", "USER", saved.getId());
         return UserResponse.from(saved);
     }
 

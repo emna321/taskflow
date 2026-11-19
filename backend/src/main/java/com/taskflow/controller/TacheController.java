@@ -6,7 +6,10 @@ import com.taskflow.dto.TacheRequest;
 import com.taskflow.dto.TacheResponse;
 import com.taskflow.entity.Priorite;
 import com.taskflow.entity.Statut;
+import com.taskflow.entity.User;
+import com.taskflow.service.ActiviteService;
 import com.taskflow.service.TacheService;
+import com.taskflow.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.HttpStatus;
@@ -22,9 +25,13 @@ import java.util.List;
 public class TacheController {
 
     private final TacheService tacheService;
+    private final UserService userService;
+    private final ActiviteService activiteService;
 
-    public TacheController(TacheService tacheService) {
+    public TacheController(TacheService tacheService, UserService userService, ActiviteService activiteService) {
         this.tacheService = tacheService;
+        this.userService = userService;
+        this.activiteService = activiteService;
     }
 
     /** GET /api/taches, /api/taches?projetId=1 ou /api/taches?userId=2 */
@@ -57,8 +64,12 @@ public class TacheController {
 
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
-    public TacheResponse create(@Valid @RequestBody TacheRequest request) {
-        return tacheService.create(request);
+    public TacheResponse create(@Valid @RequestBody TacheRequest request, Authentication authentication) {
+        TacheResponse cree = tacheService.create(request);
+        User acteur = userService.getEntityByEmail(authentication.getName());
+        activiteService.enregistrer(acteur, acteur.getPrenom() + " a créé la tâche « " + cree.titre() + " »",
+                "TACHE", cree.id());
+        return cree;
     }
 
     @PutMapping("/{id}")
@@ -80,6 +91,11 @@ public class TacheController {
                                        Authentication authentication) {
         boolean isAdmin = authentication.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
-        return tacheService.changerStatut(id, request.statut(), authentication.getName(), isAdmin);
+        TacheResponse maj = tacheService.changerStatut(id, request.statut(), authentication.getName(), isAdmin);
+        User acteur = userService.getEntityByEmail(authentication.getName());
+        String verbe = maj.statut() == com.taskflow.entity.Statut.TERMINEE ? "a terminé" : "a changé le statut de";
+        activiteService.enregistrer(acteur, acteur.getPrenom() + " " + verbe + " la tâche « " + maj.titre() + " »",
+                "TACHE", maj.id());
+        return maj;
     }
 }

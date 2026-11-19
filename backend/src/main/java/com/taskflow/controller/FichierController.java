@@ -3,6 +3,7 @@ package com.taskflow.controller;
 import com.taskflow.dto.FichierMeta;
 import com.taskflow.entity.Fichier;
 import com.taskflow.entity.User;
+import com.taskflow.service.ActiviteService;
 import com.taskflow.service.FichierService;
 import com.taskflow.service.UserService;
 import org.springframework.http.HttpHeaders;
@@ -23,10 +24,12 @@ public class FichierController {
 
     private final FichierService fichierService;
     private final UserService userService;
+    private final ActiviteService activiteService;
 
-    public FichierController(FichierService fichierService, UserService userService) {
+    public FichierController(FichierService fichierService, UserService userService, ActiviteService activiteService) {
         this.fichierService = fichierService;
         this.userService = userService;
+        this.activiteService = activiteService;
     }
 
     @PostMapping("/api/taches/{id}/fichiers")
@@ -34,7 +37,10 @@ public class FichierController {
     public FichierMeta uploaderPourTache(@PathVariable Long id, @RequestParam("fichier") MultipartFile fichier,
                                          Authentication authentication) {
         User uploadeur = userService.getEntityByEmail(authentication.getName());
-        return fichierService.uploaderPourTache(id, fichier, uploadeur);
+        FichierMeta meta = fichierService.uploaderPourTache(id, fichier, uploadeur);
+        activiteService.enregistrer(uploadeur, uploadeur.getPrenom() + " a ajouté le fichier « " + meta.nomOriginal() + " »",
+                "TACHE", id);
+        return meta;
     }
 
     @GetMapping("/api/taches/{id}/fichiers")
@@ -47,7 +53,10 @@ public class FichierController {
     public FichierMeta uploaderPourProjet(@PathVariable Long id, @RequestParam("fichier") MultipartFile fichier,
                                           Authentication authentication) {
         User uploadeur = userService.getEntityByEmail(authentication.getName());
-        return fichierService.uploaderPourProjet(id, fichier, uploadeur);
+        FichierMeta meta = fichierService.uploaderPourProjet(id, fichier, uploadeur);
+        activiteService.enregistrer(uploadeur, uploadeur.getPrenom() + " a ajouté le fichier « " + meta.nomOriginal() + " »",
+                "PROJET", id);
+        return meta;
     }
 
     @GetMapping("/api/projets/{id}/fichiers")

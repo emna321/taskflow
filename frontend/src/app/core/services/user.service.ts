@@ -17,4 +17,12 @@ export class UserService {
   update(id: number, u: UserRequest) { return this.http.put<User>(`${this.api}/${id}`, u); }
   updateRoles(id: number, roles: RoleName[]) { return this.http.put<User>(`${this.api}/${id}/roles`, { roles }); }
   delete(id: number) { return this.http.delete<void>(`${this.api}/${id}`); }
+
+  // --- Mon profil (tout utilisateur connecte) ---
+  modifierMonProfil(nom: string, prenom: string, tel: string) {
+    return this.http.put<User>(`${this.api}/me`, { nom, prenom, tel });
+  }
+  changerMonMotDePasse(ancien: string, nouveau: string, confirmation: string) {
+    return this.http.put<void>(`${this.api}/me/password`, { ancien, nouveau, confirmation });
+  }
 }

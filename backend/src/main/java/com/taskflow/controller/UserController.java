@@ -1,9 +1,12 @@
 package com.taskflow.controller;
 
+import com.taskflow.dto.ChangerMotDePasseRequest;
+import com.taskflow.dto.MonProfilRequest;
 import com.taskflow.dto.RolesRequest;
 import com.taskflow.dto.UserRequest;
 import com.taskflow.dto.UserResponse;
 import com.taskflow.entity.User;
+import com.taskflow.exception.BadRequestException;
 import com.taskflow.service.UserService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -66,6 +69,26 @@ public class UserController {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@PathVariable Long id, Authentication authentication) {
         userService.delete(id, authentication.getName());
+    }
+
+    /** Chacun peut modifier son propre nom/prenom/telephone (pas son email ni ses roles). */
+    @PutMapping("/me")
+    @PreAuthorize("isAuthenticated()")
+    public UserResponse modifierMonProfil(@Valid @RequestBody MonProfilRequest request, Authentication authentication) {
+        User moi = userService.getEntityByEmail(authentication.getName());
+        return userService.modifierMonProfil(moi.getId(), request.nom(), request.prenom(), request.tel());
+    }
+
+    /** Changement de mot de passe : l'ancien mot de passe est verifie avec BCrypt. */
+    @PutMapping("/me/password")
+    @PreAuthorize("isAuthenticated()")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void changerMonMotDePasse(@Valid @RequestBody ChangerMotDePasseRequest request, Authentication authentication) {
+        if (!request.nouveau().equals(request.confirmation())) {
+            throw new BadRequestException("La confirmation ne correspond pas au nouveau mot de passe");
+        }
+        User moi = userService.getEntityByEmail(authentication.getName());
+        userService.changerMotDePasse(moi.getId(), request.ancien(), request.nouveau());
     }
 
     /** Photo de profil : chacun peut envoyer la sienne, tout utilisateur connecte peut consulter une photo. */

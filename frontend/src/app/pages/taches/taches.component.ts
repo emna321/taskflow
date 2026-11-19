@@ -7,6 +7,7 @@ import { TacheService } from '../../core/services/tache.service';
 import { UserService } from '../../core/services/user.service';
 import { FileUploadComponent } from '../../shared/file-upload/file-upload.component';
 import { CommentairesComponent } from '../../shared/commentaires/commentaires.component';
+import { ExportService } from '../../core/services/export.service';
 import {
   PRIORITE_LABELS, Priorite, Projet, STATUT_LABELS, Statut, Tache, TacheRequest, User, errorMessage
 } from '../../core/models';
@@ -22,6 +23,7 @@ export class TachesComponent implements OnInit {
   private tacheService = inject(TacheService);
   private projetService = inject(ProjetService);
   private userService = inject(UserService);
+  private exportService = inject(ExportService);
 
   statuts: Statut[] = ['A_FAIRE', 'EN_COURS', 'TERMINEE'];
   priorites: Priorite[] = ['BASSE', 'MOYENNE', 'HAUTE'];
@@ -143,6 +145,13 @@ export class TachesComponent implements OnInit {
   invalide(champ: string): boolean {
     const c = this.form.get(champ);
     return !!c && c.invalid && (c.touched || c.dirty);
+  }
+
+  exporter(format: 'xlsx' | 'pdf'): void {
+    this.exportService.exporterTaches(format).subscribe({
+      next: blob => this.exportService.telecharger(blob, `taches.${format}`),
+      error: err => this.erreur = errorMessage(err)
+    });
   }
 
   ouvrirAjout(): void {

@@ -84,6 +84,8 @@ Ouvrir http://localhost:4200. En développement, Angular appelle `http://localho
 | Commentaires : lister, ajouter | ✅ | ✅ |
 | Commentaires : supprimer | ✅ | seulement les siens (403 sinon) |
 | Statistiques du tableau de bord, Kanban, recherche avancée | ✅ | ✅ |
+| Mon profil (nom, prénom, tél.) et mon mot de passe | ✅ | ✅ |
+| Journal d'activité, exports Excel/PDF | ✅ | ✅ |
 
 À l'inscription, l'utilisateur reçoit le rôle **COLLABORATEUR**. L'admin peut ensuite le promouvoir depuis la page *Utilisateurs*.
 
@@ -122,10 +124,19 @@ Toutes les routes sauf `login` et `register` exigent l'en-tête `Authorization: 
 | DELETE | `/api/commentaires/{id}` | ADMIN ou l'auteur du commentaire |
 | GET | `/api/stats` (statuts, priorités, par projet, en retard, charge par collaborateur) | connecté |
 | GET | `/api/taches/recherche`, `/api/projets/recherche`, `/api/clients/recherche` (`q`, filtres, `tri`, `page`, `taille`, réponse paginée) | connecté |
+| PUT | `/api/users/me` `{ nom, prenom, tel }` | connecté (son propre profil) |
+| PUT | `/api/users/me/password` `{ ancien, nouveau, confirmation }` → 204 | connecté (ancien mot de passe vérifié) |
+| GET | `/api/activites` (`?limit=20`, 100 max) | connecté |
+| GET | `/api/export/taches`, `/api/export/projets` (`?format=xlsx` par défaut, ou `pdf`) | connecté |
+| GET | `/api/projets/{id}/export` (fiche projet + ses tâches en PDF) | connecté |
 
 **Erreurs** : réponse JSON `{ status, message, details }` avec les codes 400 (validation ou fichier invalide, avec un message par champ), 401 (non connecté / token invalide), 403 (droits insuffisants), 404 (introuvable), 409 (email déjà utilisé) et 413 (fichier trop volumineux).
 
 **Recherche paginée** : endpoints dédiés (`/recherche`) distincts des listes existantes (`GET /api/taches`, etc.), pour ne rien casser côté dashboard/Kanban/fiche projet qui consomment encore la liste simple. La page Tâches, Projets et Clients utilise `/recherche` avec sa barre de filtres + pagination (Précédent/Suivant).
+
+**Rappels d'échéance** : chaque jour à 8 h (`RappelService`, `@Scheduled`), un email est envoyé à la personne affectée à chaque tâche non terminée dont l'échéance est le lendemain ; le champ `rappelEnvoye` évite d'envoyer deux fois le même rappel. Nécessite la configuration email (section 6).
+
+**Exports** : Excel via Apache POI, PDF via OpenPDF.
 
 **Pièces jointes** : stockées en base (colonne binaire LONGBLOB sur MySQL / bytea sur PostgreSQL), jamais sur le disque — indispensable sur Render dont le plan gratuit ne conserve pas le filesystem. Types acceptés : pdf, doc(x), xls(x), ppt(x), txt, csv, png, jpg, jpeg, webp, zip (5 Mo max, 1 Mo pour le logo/la photo). L'extension, le type MIME et la signature binaire (pour les images et PDF) sont vérifiés côté serveur ; le nom de fichier est nettoyé (chemins et caractères spéciaux retirés).
 
@@ -200,8 +211,9 @@ Projet  1 ── *  Tache (id, titre, description, statut, priorite, dateEcheanc
 User    1 ── *  Tache   (tâche affectée à un utilisateur, facultatif)
 Fichier (id, nomOriginal, typeMime, taille, contenu, dateUpload, idUploadePar) ── *  rattache a 1 Tache OU 1 Projet (jamais les deux)
 Commentaire (id, texte, dateCreation, idAuteur, idTache)  * ── 1  Tache
+Activite (id, action, typeObjet, idObjet, dateActivite)  * ── 1  User (acteur)
 ```
-Suppressions : un client supprime ses projets (et leurs pièces jointes), un projet supprime ses tâches et ses documents, et un utilisateur supprimé libère ses tâches (elles deviennent non affectées).
+Suppressions : un client supprime ses projets (et leurs pièces jointes), un projet supprime ses tâches et ses documents, et un utilisateur supprimé libère ses tâches (elles deviennent non affectées) et son journal d'activité est effacé.
 
 ### Portabilité MySQL / PostgreSQL (profil `render`)
 
@@ -211,3 +223,12 @@ docker build -t taskflow .
 docker run -p 8080:8080 -e SPRING_PROFILES_ACTIVE=render -e SPRING_DATASOURCE_URL=jdbc:postgresql://HOST:5432/DB -e DB_USER=... -e DB_PASSWORD=... taskflow
 ```
 Le `Dockerfile` à la racine construit l'Angular puis le jar Spring Boot ; `backend/src/main/resources/application-render.properties` configure le driver PostgreSQL.
+
+### Déploiement sur Render (Blueprint `render.yaml`)
+
+1. Pousser le projet sur un dépôt GitHub (le dossier qui contient `Dockerfile` et `render.yaml` doit être la racine du dépôt).
+2. Sur [dashboard.render.com](https://dashboard.render.com) : **New → Blueprint**, connecter GitHub et choisir le dépôt.
+3. Render lit `render.yaml` et crée la base PostgreSQL `taskflow-db` et le service web `taskflow` (Docker). Il demande seulement `ADMIN_PASSWORD` (mot de passe du compte `admin@taskflow.com`) ; `JWT_SECRET` est généré automatiquement et les identifiants de la base sont injectés (`DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`).
+4. Premier build : environ 5 à 10 minutes. L'application est ensuite servie sur `https://taskflow-xxxx.onrender.com` (frontend + API sur la même adresse, donc pas de CORS à configurer).
+
+À savoir sur l'offre gratuite : le service s'endort après 15 min sans visite (premier chargement ensuite ≈ 1 min) ; la base PostgreSQL gratuite expire au bout de 30 jours. Chaque `git push` sur la branche suivie redéploie automatiquement. Pour activer les emails, ajouter `MAIL_ENABLED=true`, `MAIL_USERNAME`, `MAIL_PASSWORD` dans *Environment* (voir section 6).

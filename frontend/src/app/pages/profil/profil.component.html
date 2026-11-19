@@ -1,7 +1,7 @@
 @if (message) { <div class="alert alert-success alert-dismissible">{{ message }}<button class="btn-close" (click)="message=''"></button></div> }
 @if (erreur) { <div class="alert alert-danger alert-dismissible">{{ erreur }}<button class="btn-close" (click)="erreur=''"></button></div> }
 
-<div class="card">
+<div class="card mb-4">
   <div class="card-header"><h3>Mon profil</h3></div>
   <div class="card-body">
     <div class="d-flex align-items-center gap-3 mb-4">
@@ -24,9 +24,57 @@
     }
 
     @if (auth.currentUser(); as u) {
-      <p class="mb-1"><strong>Nom :</strong> {{ u.prenom }} {{ u.nom }}</p>
       <p class="mb-1"><strong>Email :</strong> {{ u.email }}</p>
-      <p class="mb-0"><strong>Rôle :</strong> {{ auth.isAdmin() ? 'Administrateur' : 'Collaborateur' }}</p>
+      <p class="mb-3"><strong>Rôle :</strong> {{ auth.isAdmin() ? 'Administrateur' : 'Collaborateur' }}</p>
     }
+
+    <form [formGroup]="formProfil" (ngSubmit)="enregistrerProfil()" novalidate>
+      @if (erreurProfil) { <div class="alert alert-danger py-2">{{ erreurProfil }}</div> }
+      <div class="row">
+        <div class="col-md-5 mb-3">
+          <label class="form-label">Prénom *</label>
+          <input class="form-control" formControlName="prenom" />
+        </div>
+        <div class="col-md-5 mb-3">
+          <label class="form-label">Nom *</label>
+          <input class="form-control" formControlName="nom" />
+        </div>
+        <div class="col-md-2 mb-3">
+          <label class="form-label">Téléphone</label>
+          <input class="form-control" formControlName="tel" />
+        </div>
+      </div>
+      <div class="text-end">
+        <button type="submit" class="btn btn-primary">Enregistrer</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><h3>Changer le mot de passe</h3></div>
+  <div class="card-body">
+    @if (messageMdp) { <div class="alert alert-success py-2">{{ messageMdp }}</div> }
+    @if (erreurMdp) { <div class="alert alert-danger py-2">{{ erreurMdp }}</div> }
+    <form [formGroup]="formMdp" (ngSubmit)="changerMotDePasse()" novalidate>
+      <div class="row">
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Ancien mot de passe *</label>
+          <input class="form-control" type="password" formControlName="ancien" />
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Nouveau mot de passe *</label>
+          <input class="form-control" type="password" formControlName="nouveau" />
+          <div class="form-text">6 caractères minimum.</div>
+        </div>
+        <div class="col-md-4 mb-3">
+          <label class="form-label">Confirmation *</label>
+          <input class="form-control" type="password" formControlName="confirmation" />
+        </div>
+      </div>
+      <div class="text-end">
+        <button type="submit" class="btn btn-primary">Changer le mot de passe</button>
+      </div>
+    </form>
   </div>
 </div>

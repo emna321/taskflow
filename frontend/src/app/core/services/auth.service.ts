@@ -54,6 +54,15 @@ export class AuthService {
     this.currentUser.set(maj);
   }
 
+  /** Met a jour nom/prenom apres modification du profil (barre du haut, initiales...). */
+  actualiserIdentite(nom: string, prenom: string): void {
+    const u = this.currentUser();
+    if (!u) return;
+    const maj = { ...u, nom, prenom };
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(maj));
+    this.currentUser.set(maj);
+  }
+
   private load(): AuthResponse | null {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);

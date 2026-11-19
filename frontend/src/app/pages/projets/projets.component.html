@@ -10,6 +10,14 @@
       <option value="">Tous les clients</option>
       @for (c of clients; track c.id) { <option [value]="c.id">{{ c.nom }}</option> }
     </select>
+    <div class="btn-group">
+      <button class="btn btn-sm btn-outline-secondary" title="Exporter en Excel" (click)="exporter('xlsx')">
+        <i class="bi bi-file-earmark-excel"></i>
+      </button>
+      <button class="btn btn-sm btn-outline-secondary" title="Exporter en PDF" (click)="exporter('pdf')">
+        <i class="bi bi-file-earmark-pdf"></i>
+      </button>
+    </div>
     <button class="btn btn-sm btn-primary" (click)="ouvrirAjout()"><i class="bi bi-plus-lg"></i> Ajouter</button>
   </div>
 
@@ -103,7 +111,13 @@
 @if (detail) {
   <div class="tf-backdrop" (click)="detail = null">
     <div class="card tf-modal" (click)="$event.stopPropagation()">
-      <div class="card-header d-flex"><h3>{{ detail.libelle }}</h3><button class="btn-close ms-auto" (click)="detail = null"></button></div>
+      <div class="card-header d-flex align-items-center">
+        <h3>{{ detail.libelle }}</h3>
+        <button class="btn btn-sm btn-outline-secondary ms-auto" title="Exporter la fiche en PDF" (click)="exporterFiche(detail)">
+          <i class="bi bi-file-earmark-pdf"></i> Fiche PDF
+        </button>
+        <button class="btn-close ms-2" (click)="detail = null"></button>
+      </div>
       <div class="card-body">
         <p class="mb-1"><strong>Client :</strong> {{ detail.clientNom }}</p>
         <p class="mb-1"><strong>Budget :</strong> {{ detail.budget != null ? (detail.budget | number: '1.0-2') + ' DT' : '-' }}</p>

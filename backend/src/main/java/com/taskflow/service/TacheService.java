@@ -119,6 +119,10 @@ public class TacheService {
         t.setDescription(req.description());
         t.setStatut(req.statut() == null ? Statut.A_FAIRE : req.statut());
         t.setPriorite(req.priorite() == null ? Priorite.MOYENNE : req.priorite());
+        // Si l'echeance change, un nouveau rappel doit pouvoir etre envoye pour la nouvelle date
+        if (!java.util.Objects.equals(t.getDateEcheance(), req.dateEcheance())) {
+            t.setRappelEnvoye(false);
+        }
         t.setDateEcheance(req.dateEcheance());
         t.setProjet(projetService.getEntity(req.projetId()));
         // Affecter la tache a un utilisateur (facultatif)

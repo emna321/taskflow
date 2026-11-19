@@ -6,6 +6,7 @@ import { ClientService } from '../../core/services/client.service';
 import { ProjetService } from '../../core/services/projet.service';
 import { TacheService } from '../../core/services/tache.service';
 import { FileUploadComponent } from '../../shared/file-upload/file-upload.component';
+import { ExportService } from '../../core/services/export.service';
 import { Client, Projet, ProjetRequest, STATUT_LABELS, Tache, errorMessage } from '../../core/models';
 
 @Component({
@@ -19,6 +20,7 @@ export class ProjetsComponent implements OnInit {
   private projetService = inject(ProjetService);
   private clientService = inject(ClientService);
   private tacheService = inject(TacheService);
+  private exportService = inject(ExportService);
 
   statutLabels = STATUT_LABELS;
   projets: Projet[] = [];
@@ -141,5 +143,19 @@ export class ProjetsComponent implements OnInit {
     this.detail = p;
     this.tachesDuProjet = [];
     this.tacheService.getAll({ projetId: p.id }).subscribe(t => this.tachesDuProjet = t);
+  }
+
+  exporter(format: 'xlsx' | 'pdf'): void {
+    this.exportService.exporterProjets(format).subscribe({
+      next: blob => this.exportService.telecharger(blob, `projets.${format}`),
+      error: err => this.erreur = errorMessage(err)
+    });
+  }
+
+  exporterFiche(p: Projet): void {
+    this.exportService.exporterFicheProjet(p.id).subscribe({
+      next: blob => this.exportService.telecharger(blob, `projet-${p.id}.pdf`),
+      error: err => this.erreur = errorMessage(err)
+    });
   }
 }

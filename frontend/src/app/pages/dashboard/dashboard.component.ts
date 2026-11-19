@@ -9,7 +9,8 @@ import { ClientService } from '../../core/services/client.service';
 import { ProjetService } from '../../core/services/projet.service';
 import { TacheService } from '../../core/services/tache.service';
 import { StatsService } from '../../core/services/stats.service';
-import { PRIORITE_LABELS, STATUT_LABELS, Stats, Tache, errorMessage } from '../../core/models';
+import { ActiviteService } from '../../core/services/activite.service';
+import { Activite, PRIORITE_LABELS, STATUT_LABELS, Stats, Tache, errorMessage } from '../../core/models';
 
 const COULEURS = ['#5e72e4', '#11cdef', '#2dce89', '#fb6340', '#f5365c', '#825ee4', '#8898aa'];
 
@@ -24,6 +25,7 @@ export class DashboardComponent implements OnInit {
   private projetService = inject(ProjetService);
   private tacheService = inject(TacheService);
   private statsService = inject(StatsService);
+  private activiteService = inject(ActiviteService);
 
   statutLabels = STATUT_LABELS;
   prioriteLabels = PRIORITE_LABELS;
@@ -33,6 +35,7 @@ export class DashboardComponent implements OnInit {
   nbProjets = 0;
   taches: Tache[] = [];
   stats: Stats | null = null;
+  activites: Activite[] = [];
 
   // ----- Graphiques (Chart.js via ng2-charts) -----
   statutChartData: ChartConfiguration<'doughnut'>['data'] = { labels: [], datasets: [{ data: [] }] };
@@ -60,13 +63,15 @@ export class DashboardComponent implements OnInit {
       clients: this.clientService.getAll(),
       projets: this.projetService.getAll(),
       taches: this.tacheService.getAll(),
-      stats: this.statsService.obtenir()
+      stats: this.statsService.obtenir(),
+      activites: this.activiteService.lister(20)
     }).subscribe({
       next: r => {
         this.nbClients = r.clients.length;
         this.nbProjets = r.projets.length;
         this.taches = r.taches;
         this.stats = r.stats;
+        this.activites = r.activites;
         this.construireGraphiques(r.stats);
         this.chargement = false;
       },

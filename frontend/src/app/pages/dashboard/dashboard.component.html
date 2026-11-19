@@ -62,32 +62,56 @@
   </div>
 }
 
-<div class="card">
-  <div class="card-header d-flex align-items-center">
-    <h3>Mes tâches à traiter</h3>
-    <a routerLink="/taches" class="btn btn-sm btn-primary ms-auto">Voir toutes les tâches</a>
-  </div>
-  @if (erreur) { <div class="alert alert-danger m-3">{{ erreur }}</div> }
-  @if (chargement) {
-    <div class="text-center p-5"><span class="spinner-border text-primary"></span></div>
-  } @else if (mesTaches.length === 0) {
-    <div class="empty-state"><i class="bi bi-emoji-smile"></i>Aucune tâche en attente pour vous.</div>
-  } @else {
-    <div class="table-responsive">
-      <table class="table table-flush">
-        <thead><tr><th>Tâche</th><th>Projet</th><th>Priorité</th><th>Statut</th><th>Échéance</th></tr></thead>
-        <tbody>
-          @for (t of mesTaches; track t.id) {
-            <tr>
-              <td class="fw-semibold text-dark">{{ t.titre }}</td>
-              <td>{{ t.projetLibelle }}</td>
-              <td>{{ prioriteLabels[t.priorite] }}</td>
-              <td>{{ statutLabels[t.statut] }}</td>
-              <td>{{ t.dateEcheance ? (t.dateEcheance | date: 'dd/MM/yyyy') : '-' }}</td>
-            </tr>
-          }
-        </tbody>
-      </table>
+<div class="row g-4">
+  <div class="col-xl-8">
+    <div class="card">
+      <div class="card-header d-flex align-items-center">
+        <h3>Mes tâches à traiter</h3>
+        <a routerLink="/taches" class="btn btn-sm btn-primary ms-auto">Voir toutes les tâches</a>
+      </div>
+      @if (erreur) { <div class="alert alert-danger m-3">{{ erreur }}</div> }
+      @if (chargement) {
+        <div class="text-center p-5"><span class="spinner-border text-primary"></span></div>
+      } @else if (mesTaches.length === 0) {
+        <div class="empty-state"><i class="bi bi-emoji-smile"></i>Aucune tâche en attente pour vous.</div>
+      } @else {
+        <div class="table-responsive">
+          <table class="table table-flush">
+            <thead><tr><th>Tâche</th><th>Projet</th><th>Priorité</th><th>Statut</th><th>Échéance</th></tr></thead>
+            <tbody>
+              @for (t of mesTaches; track t.id) {
+                <tr>
+                  <td class="fw-semibold text-dark">{{ t.titre }}</td>
+                  <td>{{ t.projetLibelle }}</td>
+                  <td>{{ prioriteLabels[t.priorite] }}</td>
+                  <td>{{ statutLabels[t.statut] }}</td>
+                  <td>{{ t.dateEcheance ? (t.dateEcheance | date: 'dd/MM/yyyy') : '-' }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
     </div>
-  }
+  </div>
+
+  <div class="col-xl-4">
+    <div class="card h-100">
+      <div class="card-header"><h3>Activité récente</h3></div>
+      @if (chargement) {
+        <div class="text-center p-5"><span class="spinner-border text-primary"></span></div>
+      } @else if (activites.length === 0) {
+        <div class="empty-state"><i class="bi bi-clock-history"></i>Aucune activité pour l'instant.</div>
+      } @else {
+        <ul class="list-group list-group-flush">
+          @for (a of activites; track a.id) {
+            <li class="list-group-item">
+              <div>{{ a.action }}</div>
+              <div class="text-muted" style="font-size:.75rem">{{ a.dateActivite | date: 'dd/MM/yyyy HH:mm' }}</div>
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </div>
 </div>

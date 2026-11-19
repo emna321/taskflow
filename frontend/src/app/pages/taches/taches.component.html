@@ -31,6 +31,14 @@
              [value]="filtreDateDebut" (change)="filtreDateDebut = $any($event.target).value; appliquerFiltres()" />
       <input class="form-control form-control-sm" style="width:140px" type="date" title="Échéance avant le"
              [value]="filtreDateFin" (change)="filtreDateFin = $any($event.target).value; appliquerFiltres()" />
+      <div class="btn-group">
+        <button class="btn btn-sm btn-outline-secondary" title="Exporter en Excel" (click)="exporter('xlsx')">
+          <i class="bi bi-file-earmark-excel"></i>
+        </button>
+        <button class="btn btn-sm btn-outline-secondary" title="Exporter en PDF" (click)="exporter('pdf')">
+          <i class="bi bi-file-earmark-pdf"></i>
+        </button>
+      </div>
       <button class="btn btn-sm btn-primary" (click)="ouvrirAjout()"><i class="bi bi-plus-lg"></i> Ajouter</button>
     </div>
   </div>

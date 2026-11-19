@@ -54,6 +54,10 @@ export interface Stats {
 
 export interface Page<T> { content: T[]; totalElements: number; totalPages: number; page: number; taille: number; }
 
+export interface Activite {
+  id: number; action: string; typeObjet: string; idObjet: number; dateActivite: string; acteurNom: string;
+}
+
 export interface Projet {
   id: number; libelle: string; budget?: number; duree?: number; description?: string;
   clientId: number; clientNom: string; nbTaches: number;

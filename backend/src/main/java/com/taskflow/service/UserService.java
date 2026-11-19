@@ -8,6 +8,7 @@ import com.taskflow.entity.User;
 import com.taskflow.exception.BadRequestException;
 import com.taskflow.exception.ConflictException;
 import com.taskflow.exception.ResourceNotFoundException;
+import com.taskflow.repository.ActiviteRepository;
 import com.taskflow.repository.RoleRepository;
 import com.taskflow.repository.TacheRepository;
 import com.taskflow.repository.UserRepository;
@@ -30,15 +31,18 @@ public class UserService {
     private final TacheRepository tacheRepository;
     private final PasswordEncoder passwordEncoder;
     private final FichierValidationService fichierValidationService;
+    private final ActiviteRepository activiteRepository;
 
     public UserService(UserRepository userRepository, RoleRepository roleRepository,
                        TacheRepository tacheRepository, PasswordEncoder passwordEncoder,
-                       FichierValidationService fichierValidationService) {
+                       FichierValidationService fichierValidationService,
+                       ActiviteRepository activiteRepository) {
         this.userRepository = userRepository;
         this.roleRepository = roleRepository;
         this.tacheRepository = tacheRepository;
         this.passwordEncoder = passwordEncoder;
         this.fichierValidationService = fichierValidationService;
+        this.activiteRepository = activiteRepository;
     }
 
     @Transactional(readOnly = true)
@@ -97,6 +101,8 @@ public class UserService {
         }
         // Les taches affectees deviennent non affectees
         tacheRepository.findByUserId(id).forEach(t -> t.setUser(null));
+        // Son historique d'activite reference l'utilisateur (FK NOT NULL) : on le retire
+        activiteRepository.deleteByActeurId(id);
         userRepository.delete(u);
     }
 
@@ -120,6 +126,26 @@ public class UserService {
             throw new BadRequestException("Impossible de lire le fichier envoye");
         }
         u.setPhotoTypeMime(fichier.getContentType());
+        userRepository.save(u);
+    }
+
+    @Transactional
+    public UserResponse modifierMonProfil(Long id, String nom, String prenom, String tel) {
+        User u = getEntity(id);
+        u.setNom(nom.trim());
+        u.setPrenom(prenom.trim());
+        u.setTel(tel);
+        return UserResponse.from(userRepository.save(u));
+    }
+
+    /** Changement de mot de passe : l'ancien mot de passe doit etre verifie avec BCrypt. */
+    @Transactional
+    public void changerMotDePasse(Long id, String ancien, String nouveau) {
+        User u = getEntity(id);
+        if (!passwordEncoder.matches(ancien, u.getPassword())) {
+            throw new BadRequestException("Ancien mot de passe incorrect");
+        }
+        u.setPassword(passwordEncoder.encode(nouveau));
         userRepository.save(u);
     }
 
